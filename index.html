@@ -146,11 +146,21 @@ td{border-bottom:1px solid var(--ln);padding:6px;vertical-align:top}tr.it:hover 
   <div id="tCarga" class="hide">
     <div class="card">
       <h3 style="margin-top:0;color:var(--v)">Cargar reporte RC</h3>
-      <p>Selecciona el <b>RC_ddmmaaaa_hhmmss.xlsx</b> exportado de la plataforma, o el <b>RC_PLATAFORMA_…xlsx</b> ya trabajado (si trae la columna <i>Acciones</i>, se muestra a las unidades como acción sugerida). También acepta CSV.</p>
-      <p class="mut">Se cargan los renglones que no están FINALIZADOS. Si un folio + clave ya existe, solo se actualizan los datos del RC (estatus, días, acción sugerida); lo que capturaron las unidades no se borra.</p>
+      <p>Selecciona el <b>RC_ddmmaaaa_hhmmss.xlsx</b> exportado de la plataforma. También acepta CSV.</p>
+      <p class="mut">• Solo se <b>agregan las recetas nuevas</b> (folio que aún no está en la base). Las recetas que ya tienen registro no se vuelven a capturar: solo se actualiza su estatus (REGISTRADA, EN GESTIÓN, EN SITIO o <b>FINALIZADA</b>) y los días; si les faltaba teléfono o correo, se completan.<br>
+        • Las recetas FINALIZADAS que todavía no estaban en la base no se agregan.<br>
+        • Lo que capturaron las unidades nunca se borra.</p>
       <input type="file" id="fileRC" accept=".xlsx,.xls,.csv">
       <div id="prev" class="mut" style="margin-top:10px"></div>
       <div class="row" style="margin-top:10px"><button id="btnImp" disabled>Subir a la base de datos</button></div>
+    </div>
+    <div class="card">
+      <h3 style="margin-top:0;color:var(--v)">Actualizar acciones con RC_PLATAFORMA</h3>
+      <p>Selecciona el <b>RC_PLATAFORMA_ddmmaaaa_hhmm.xlsx</b>. Se toma la columna <b>Acciones</b> (hoja RC dd-mm-aaaa) y se actualiza la acción sugerida a los administradores en las recetas que ya están en la base.</p>
+      <p class="mut">No agrega recetas ni cambia estatus: para eso usa "Cargar reporte RC". La acción aparece en las Observaciones de la Gestión del Administrador.</p>
+      <input type="file" id="filePLA" accept=".xlsx,.xls">
+      <div id="prevPLA" class="mut" style="margin-top:10px"></div>
+      <div class="row" style="margin-top:10px"><button id="btnImpPLA" disabled>Actualizar acciones</button></div>
     </div>
     <div class="card" id="demoBox">
       <h3 style="margin-top:0;color:var(--v)">Datos de ejemplo</h3>
@@ -251,7 +261,9 @@ function estatusMonitor(r) {
   k = Math.max(k, RANK[String(r.estatusRC || '').toUpperCase()] ?? 0);
   return EST[k];
 }
-const enPlataforma = r => r.p_estatus || r.estatusRC || 'REGISTRADA';
+// lo que ya está en plataforma: lo más avanzado entre lo marcado por CAE y lo que dice el último RC
+const enPlataforma = r => { const a = String(r.p_estatus || '').toUpperCase(), b = String(r.estatusRC || '').toUpperCase();
+  return (RANK[a] ?? -1) >= (RANK[b] ?? -1) ? (r.p_estatus || 'REGISTRADA') : (r.estatusRC || 'REGISTRADA'); };
 const pendPlataforma = r => (RANK[estatusMonitor(r)] ?? 0) > (RANK[String(enPlataforma(r)).toUpperCase()] ?? 0);
 function pendRol(r, rol) {
   if (estatusMonitor(r) === 'FINALIZADA' && rol !== 'CAE') return false;
@@ -266,10 +278,40 @@ function pendRol(r, rol) {
    ADAPTADORES DE BASE DE DATOS
    interfaz: list() -> [reg], upsertMany(regs), update(id, patch), upload(id, file) -> url
    ===================================================================== */
+/* ---------- reglas de carga (las mismas que cargarRC_ en Código.gs) ----------
+   modo 'RC': agrega solo folios nuevos; en los existentes actualiza estatus/días y completa contacto.
+   modo 'PLATAFORMA': solo actualiza la acción sugerida (columna Acciones) de los existentes. */
+const CONTACTO = ['telefono', 'telefono2', 'correo'];
+function fusionar(mapa, regs, modo) {
+  const folios = new Set(Object.values(mapa).map(o => String(o.folio).trim()));
+  const x = { nuevos: 0, actualizados: 0, finalizadas: 0, acciones: 0, omitFolio: 0, omitFin: 0, sinRegistro: 0 };
+  for (const r of regs) {
+    const o = mapa[r.id];
+    if (o) {
+      CONTACTO.forEach(k => { if (r[k] && !String(o[k] || '').trim()) o[k] = String(r[k]); });
+      if (modo === 'PLATAFORMA') { if (r.accionCAE && String(o.accionCAE) !== String(r.accionCAE)) { o.accionCAE = String(r.accionCAE); x.acciones++; } continue; }
+      if (r.estatusRC === 'FINALIZADA' && String(o.estatusRC).toUpperCase() !== 'FINALIZADA') x.finalizadas++;
+      ['estatusRC', 'estatusRecetaRC', 'diasRegistro', 'fechaCarga'].forEach(k => o[k] = r[k] == null ? '' : String(r[k]));
+      if (r.accionCAE) o.accionCAE = String(r.accionCAE);
+      x.actualizados++;
+    } else if (modo === 'PLATAFORMA') x.sinRegistro++;
+    else if (folios.has(String(r.folio).trim())) x.omitFolio++;
+    else if (r.estatusRC === 'FINALIZADA') x.omitFin++;
+    else { mapa[r.id] = { ...r }; x.nuevos++; }
+  }
+  return x;
+}
+function textoCarga(x, modo) {
+  if (modo === 'PLATAFORMA') return `${x.acciones} acciones actualizadas` + (x.sinRegistro ? ` · ${x.sinRegistro} renglones que no están en la base (cárgalos primero con el RC)` : '');
+  return `${x.nuevos} recetas nuevas agregadas · ${x.actualizados} ya registradas (solo estatus)` + (x.finalizadas ? ` · ${x.finalizadas} pasaron a FINALIZADA` : '')
+    + (x.omitFolio ? ` · ${x.omitFolio} claves de folios ya registrados no se agregaron` : '') + (x.omitFin ? ` · ${x.omitFin} finalizadas nuevas no se agregaron` : '');
+}
+
 const DemoDB = {
   name: 'DEMO (este navegador)',
   _all() { return LS.get('demo_db', {}); }, _save(d) { LS.set('demo_db', d); },
   async list() { return Object.values(this._all()); },
+  async cargarRC(regs, modo) { const d = this._all(), x = fusionar(d, regs, modo); this._save(d); return x; },
   async upsertMany(regs) { const d = this._all(); let n = 0, u = 0;
     for (const r of regs) { if (d[r.id]) { BASE_UPD.forEach(k => d[r.id][k] = r[k]); u++; } else { d[r.id] = r; n++; } } this._save(d); return { nuevos: n, actualizados: u }; },
   async update(id, patch) { const d = this._all(); if (!d[id]) throw new Error('No existe ' + id); Object.assign(d[id], patch); this._save(d); return d[id]; },
@@ -285,6 +327,8 @@ const AppsDB = {
   async upsertMany(regs) { let n = 0, u = 0;
     for (let i = 0; i < regs.length; i += 400) { const x = await gs('apiUpsertMany', regs.slice(i, i + 400), BASE_UPD); n += x.nuevos; u += x.actualizados; }
     return { nuevos: n, actualizados: u }; },
+  // se manda todo el archivo en una sola llamada para que "folio ya registrado" se evalúe contra la base anterior a la carga
+  async cargarRC(regs, modo) { return await gs('apiCargarRC', regs, modo); },
   async update(id, patch) { return await gs('apiUpdate', id, patch); },
   async upload(id, file) { const b64 = (await imgDataUrl(file, 1400, .72)).split(',')[1];
     return await gs('apiUpload', 'evidencia_' + id.replace(/[^\w-]/g, '_') + '_' + Date.now() + '.jpg', b64, 'image/jpeg'); },
@@ -442,12 +486,12 @@ function render() {
     ['pla', mio, USER.rol === 'CAE' ? 'Por actualizar en plataforma' : 'Pendientes de mi rubro', '#']
   ].map(([c, n, l, f]) => `<div class="kpi ${c}" data-f="${f}"><b>${n}</b><span>${l}</span></div>`).join('');
   $$('.kpi').forEach(k => k.onclick = () => { const f = k.dataset.f; if (f === '#') { $('#fVer').value = USER.rol === 'CAE' ? 'pla' : 'mio'; $('#fEst').value = ''; } else { $('#fEst').value = f; $('#fVer').value = ''; } render(); });
-  const cae = USER.rol === 'CAE';
+  const cae = USER.rol === 'CAE', verTel = cae || USER.rol === 'TAOD';
   $('#tb').innerHTML = rs.slice(0, 1500).map(r => {
     const em = estatusMonitor(r), d = dias(r);
     return `<tr class="it" data-id="${esc(r.id)}">
       <td style="color:${d >= 7 ? '#c0392b' : 'inherit'};font-weight:${d >= 7 ? 700 : 400}">${d}</td>
-      <td>${esc(String(r.unidad).replace(/^\d+\s+/, ''))}</td><td>${esc(r.folio)}</td><td>${esc(r.paciente)}</td>
+      <td>${esc(String(r.unidad).replace(/^\d+\s+/, ''))}</td><td>${esc(r.folio)}</td><td>${esc(r.paciente)}${verTel ? `<br><span class="mut">${[r.telefono, r.telefono2].filter(Boolean).map(esc).join(' / ') || 'sin teléfono'}${r.correo ? ' · ' + esc(r.correo) : ''}</span>` : ''}</td>
       <td><b>${esc(r.clave)}</b><br><span class="mut">${esc(String(r.descripcion).slice(0, 70))}</span></td><td>${esc(r.piezas)}</td>
       <td class="mut" style="max-width:220px">${esc(r.accionCAE || '—')}</td>
       <td class="dots"><span class="${r.g_accion ? 'ok' : ''}" title="Gestión (Administrador)">G</span><span class="${r.c_resultado ? 'ok' : ''}" title="Contacto (TAOD)">C</span><span class="${r.e_fechaEntrega ? 'ok' : ''}" title="Entrega (Farmacia)">E</span></td>
@@ -485,9 +529,15 @@ function abrir(id) {
       <div class="sec ${rol === 'ADM' ? 'mine' : ''} ${eG ? '' : 'lock'}" data-p="g"><h3>1 · Gestión</h3><div class="mut">Administrador(a): conseguir el medicamento</div>
         ${campo('g_accion', '¿Cómo se obtiene el medicamento?', 'sel', r, eG)}
         ${campo('g_fechaDisponible', 'Fecha estimada en farmacia', 'date', r, eG)}
-        ${campo('g_obs', 'Observaciones (remisión, unidad que traspasa, núm. de compra…)', 'area', r, eG)}
+        ${campo('g_obs', 'Observaciones (acción sugerida por CAE; complétala con remisión, unidad que traspasa, núm. de compra…)', 'area', { ...r, g_obs: r.g_obs || r.accionCAE || '' }, eG)}
         ${firma(r, 'g')}${eG ? '<button data-save="g">Guardar gestión</button>' : ''}</div>
       <div class="sec ${rol === 'TAOD' ? 'mine' : ''} ${eC ? '' : 'lock'}" data-p="c"><h3>2 · Contacto y seguimiento</h3><div class="mut">TAOD: contactar y orientar al paciente</div>
+        <div class="info" style="grid-template-columns:1fr;margin:8px 0">
+          <div><b>Paciente</b>${esc(r.paciente)}</div>
+          <div><b>Teléfono celular</b>${r.telefono ? `<a href="tel:${esc(r.telefono)}" target="_top">${esc(r.telefono)}</a>` : '—'}</div>
+          <div><b>Otro teléfono</b>${r.telefono2 ? `<a href="tel:${esc(r.telefono2)}" target="_top">${esc(r.telefono2)}</a>` : '—'}</div>
+          <div><b>Correo electrónico</b>${r.correo ? `<a href="mailto:${esc(r.correo)}" target="_top">${esc(r.correo)}</a>` : '—'}</div>
+        </div>
         ${campo('c_fecha', 'Fecha de contacto', 'date', r, eC)}
         ${campo('c_medio', 'Medio', 'sel', r, eC)}
         ${campo('c_resultado', 'Resultado', 'sel', r, eC)}
@@ -689,12 +739,14 @@ function convertir(rows) {
     const o = {}; FIELDS.forEach(f => o[f] = '');
     for (const k of Object.keys(ix)) o[k] = r[ix[k]] ?? '';
     o.fechaRegistro = fmtFecha(o.fechaRegistro); o.fechaExpedicion = fmtFecha(o.fechaExpedicion);
-    o.estatusRC = String(o.estatusRC || 'REGISTRADA').trim().toUpperCase(); o.folio = folio; o.clave = clave;
+    o.estatusRC = String(o.estatusRC || 'REGISTRADA').trim().toUpperCase().replace(/^EN GESTION$/, 'EN GESTIÓN'); o.folio = folio; o.clave = clave;
+    CONTACTO.forEach(k => o[k] = String(o[k] ?? '').trim()); o.accionCAE = String(o.accionCAE ?? '').trim();
     o.fechaCarga = fc; o.fechaAlta = fc; o.diasRegistro = String(o.diasRegistro);
     let id = folio + '|' + clave; vistos[id] = (vistos[id] || 0) + 1; if (vistos[id] > 1) id += '|' + vistos[id];
     o.id = id; out[id] = o;
   }
-  return Object.values(out);
+  const res = Object.values(out); res.tieneAcciones = ix.accionCAE != null;
+  return res;
 }
 
 /* ---------------- demo ---------------- */
@@ -742,14 +794,27 @@ $('#btnSetup').onclick = async () => { const b = $('#btnSetup'); b.disabled = tr
   try { SharePointDB.site = $('#cSite').value.trim(); SharePointDB.list = $('#cList').value.trim() || 'MonitorCAE'; const n = await SharePointDB.setup(); toast(`Lista lista. Columnas creadas: ${n}`, 5000); }
   catch (e) { toast('No se pudo crear: ' + e.message, 8000); } finally { b.disabled = false; b.textContent = 'Crear lista y columnas en SharePoint'; } };
 $('#fileRC').onchange = async e => { const f = e.target.files[0]; if (!f) return; $('#prev').textContent = 'Leyendo…'; $('#btnImp').disabled = true;
-  try { const regs = convertir(await leerArchivo(f)), act = regs.filter(r => r.estatusRC !== 'FINALIZADA');
+  try { const regs = convertir(await leerArchivo(f));
     const cnt = {}; regs.forEach(r => cnt[r.estatusRC] = (cnt[r.estatusRC] || 0) + 1);
-    PREV = act; $('#prev').innerHTML = `<b>${regs.length}</b> renglones leídos (${Object.entries(cnt).map(([k, v]) => k + ': ' + v).join(', ')}). Se subirán <b>${act.length}</b> no finalizados de <b>${new Set(act.map(r => r.unidad)).size}</b> unidades.${act.some(r => r.accionCAE) ? ' Incluye acción sugerida por CAE.' : ''}`;
-    $('#btnImp').disabled = !act.length; }
+    const copia = {}; DATA.forEach(o => copia[o.id] = { ...o }); const x = fusionar(copia, regs, 'RC');
+    PREV = regs; $('#prev').innerHTML = `<b>${regs.length}</b> renglones leídos (${Object.entries(cnt).map(([k, v]) => k + ': ' + v).join(', ')}).<br>Al subir: ${textoCarga(x, 'RC')}.`;
+    $('#btnImp').disabled = !regs.length; }
   catch (err) { $('#prev').textContent = 'Error: ' + err.message; } };
-$('#btnImp').onclick = async () => { const b = $('#btnImp'); b.disabled = true; b.textContent = 'Subiendo…';
-  try { const x = await DB.upsertMany(PREV); toast(`Listo: ${x.nuevos} nuevos, ${x.actualizados} actualizados`, 5000); PREV = null; $('#prev').textContent = ''; $('#fileRC').value = ''; await cargar(); tab('lista'); }
-  catch (e) { toast('Error al subir: ' + e.message, 8000); } finally { b.textContent = 'Subir a la base de datos'; } };
+async function subirCarga(regs, modo, b, txt, input, prev) { b.disabled = true; b.textContent = 'Subiendo…';
+  try { const x = DB.cargarRC ? await DB.cargarRC(regs, modo) : await DB.upsertMany(regs.filter(r => r.estatusRC !== 'FINALIZADA'));
+    toast('Listo: ' + (x.acciones != null ? textoCarga(x, modo) : `${x.nuevos} nuevos, ${x.actualizados} actualizados`), 8000);
+    $(prev).textContent = ''; $(input).value = ''; await cargar(); tab('lista'); }
+  catch (e) { toast('Error al subir: ' + e.message, 8000); b.disabled = false; } finally { b.textContent = txt; } }
+$('#btnImp').onclick = async () => { await subirCarga(PREV, 'RC', $('#btnImp'), 'Subir a la base de datos', '#fileRC', '#prev'); PREV = null; };
+let PREV_PLA = null;
+$('#filePLA').onchange = async e => { const f = e.target.files[0]; if (!f) return; $('#prevPLA').textContent = 'Leyendo…'; $('#btnImpPLA').disabled = true; PREV_PLA = null;
+  try { const regs = convertir(await leerArchivo(f));
+    if (!regs.tieneAcciones) throw new Error('Este archivo no trae la columna "Acciones". ¿Es el RC_PLATAFORMA?');
+    const copia = {}; DATA.forEach(o => copia[o.id] = { ...o }); const x = fusionar(copia, regs, 'PLATAFORMA');
+    PREV_PLA = regs; $('#prevPLA').innerHTML = `<b>${regs.length}</b> renglones leídos, ${regs.filter(r => r.accionCAE).length} con acción.<br>Al subir: ${textoCarga(x, 'PLATAFORMA')}.`;
+    $('#btnImpPLA').disabled = !(x.acciones || regs.length); }
+  catch (err) { $('#prevPLA').textContent = 'Error: ' + err.message; } };
+$('#btnImpPLA').onclick = async () => { await subirCarga(PREV_PLA, 'PLATAFORMA', $('#btnImpPLA'), 'Actualizar acciones', '#filePLA', '#prevPLA'); PREV_PLA = null; };
 $('#btnDemo').onclick = async () => { const b = $('#btnDemo'); b.disabled = true; try { await DB.upsertMany(demo()); await cargar(); toast('Datos de ejemplo generados'); } catch (e) { toast('Error: ' + e.message, 6000); } finally { b.disabled = false; } };
 $('#btnBorrar').onclick = async () => { const pin = prompt('Esto borra TODOS los renglones y lo capturado. Escribe el PIN de CAE para confirmar:'); if (pin == null) return;
   try { if (GAS) await AppsDB.clear(pin); else DemoDB.clear(); await cargar(); toast('Base vacía'); } catch (e) { toast('No se borró: ' + e.message, 6000); } };
