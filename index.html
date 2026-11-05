@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<script src="conexion.js"></script>
+<base target="_top">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Monitor CAE – Receta Completa</title>
+<style>
+:root{--v:#0B5345;--v2:#13322B;--dor:#B38E5D;--bg:#F2F4F3;--card:#fff;--tx:#1d2b27;--mut:#66756f;--ln:#d9e0dd;
+--reg:#FFC7CE;--ges:#FFF2CC;--sit:#DDEBF7;--fin:#C6EFCE}
+*{box-sizing:border-box}body{margin:0;font-family:"Segoe UI",Calibri,Arial,sans-serif;background:var(--bg);color:var(--tx);font-size:14px}
+header{background:var(--v2);color:#fff;padding:10px 18px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+header h1{font-size:18px;margin:0;font-weight:600}header .sub{font-size:12px;opacity:.8}
+header .sp{flex:1}.badge{background:rgba(255,255,255,.15);border-radius:12px;padding:3px 10px;font-size:12px}
+button{font:inherit;border:1px solid var(--v);background:var(--v);color:#fff;border-radius:6px;padding:7px 12px;cursor:pointer}
+button.sec{background:#fff;color:var(--v)}button.min{padding:3px 8px;font-size:12px}button:disabled{opacity:.5;cursor:default}
+button.dor{background:var(--dor);border-color:var(--dor)}
+input,select,textarea{font:inherit;border:1px solid var(--ln);border-radius:6px;padding:6px 8px;background:#fff;width:100%}
+textarea{min-height:56px;resize:vertical}label{font-size:12px;color:var(--mut);display:block;margin:6px 0 2px}
+main{padding:16px;max-width:1500px;margin:0 auto}
+.card{background:var(--card);border:1px solid var(--ln);border-radius:10px;padding:14px;margin-bottom:14px}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end}.row>*{flex:1;min-width:150px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:14px}
+.kpi{background:#fff;border:1px solid var(--ln);border-radius:10px;padding:10px 12px;border-left:6px solid var(--v);cursor:pointer}
+.kpi b{font-size:24px;display:block}.kpi span{font-size:12px;color:var(--mut)}
+.kpi.reg{border-left-color:#e06c75}.kpi.ges{border-left-color:#d4a72c}.kpi.sit{border-left-color:#4a90c8}.kpi.fin{border-left-color:#3c9a5f}.kpi.pla{border-left-color:var(--dor)}
+table{border-collapse:collapse;width:100%;background:#fff;font-size:13px}
+th{background:var(--v);color:#fff;text-align:left;padding:7px 6px;position:sticky;top:0;font-weight:600;white-space:nowrap}
+td{border-bottom:1px solid var(--ln);padding:6px;vertical-align:top}tr.it:hover td{background:#f5faf8;cursor:pointer}
+.tw{max-height:62vh;overflow:auto;border:1px solid var(--ln);border-radius:8px}
+.chip{display:inline-block;border-radius:10px;padding:2px 8px;font-size:11px;font-weight:600;white-space:nowrap}
+.REGISTRADA{background:var(--reg)}.EN_GESTION{background:var(--ges)}.EN_SITIO{background:var(--sit)}.FINALIZADA{background:var(--fin)}
+.dots span{display:inline-block;width:20px;height:20px;line-height:20px;text-align:center;border-radius:50%;font-size:10px;font-weight:700;margin-right:3px;background:#e7ecea;color:#8a9893}
+.dots span.ok{background:#3c9a5f;color:#fff}
+.tabs{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}.tabs button{background:#fff;color:var(--v)}.tabs button.on{background:var(--v);color:#fff}
+.hide{display:none!important}.mut{color:var(--mut);font-size:12px}.warn{background:#fff7e0;border:1px solid #f0d58a;border-radius:8px;padding:8px 10px;font-size:13px}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:flex-start;justify-content:center;padding:24px;overflow:auto;z-index:20}
+.mbox{background:#fff;border-radius:12px;max-width:1050px;width:100%;padding:18px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}@media(max-width:900px){.grid3{grid-template-columns:1fr}}
+.sec h3{margin:0 0 4px;font-size:15px;color:var(--v)}.sec{border:1px solid var(--ln);border-radius:10px;padding:12px;background:#fbfcfc}
+.sec.mine{border:2px solid var(--v);background:#fff}.sec.lock input,.sec.lock select,.sec.lock textarea{background:#f1f3f2}
+.info{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:4px 14px;font-size:13px;margin:8px 0 14px}
+.info div b{display:block;font-size:11px;color:var(--mut);font-weight:600}
+.toast{position:fixed;bottom:18px;right:18px;background:var(--v2);color:#fff;padding:10px 16px;border-radius:8px;z-index:30;max-width:420px}
+.evi img{max-width:100%;max-height:180px;border-radius:6px;border:1px solid var(--ln);margin-top:6px}
+.login{max-width:560px;margin:40px auto}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}@media(max-width:1000px){.grid2{grid-template-columns:1fr}}
+.ct{margin:0 0 10px;color:var(--v);font-size:15px}
+.bar{display:flex;align-items:center;gap:8px;margin:5px 0;font-size:12px}.bar .nm{width:170px;flex:0 0 170px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bar .tr{flex:1;display:flex;height:20px;border-radius:4px;overflow:hidden;background:#eef1f0}.bar .tr div{height:100%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600}
+.bar .vl{width:44px;text-align:right;font-weight:700}
+.leg{font-size:12px;color:var(--mut);margin-top:8px}.leg span{display:inline-block;width:12px;height:12px;border-radius:3px;margin:0 4px 0 10px;vertical-align:-2px}
+.sem{display:inline-block;min-width:44px;text-align:center;border-radius:10px;padding:2px 8px;font-weight:700}
+.s-v{background:#C6EFCE;color:#1e6b36}.s-a{background:#FFF2CC;color:#8a6400}.s-r{background:#FFC7CE;color:#9c1c28}
+@media print{header,.tabs,button{display:none!important}body{background:#fff}.card{break-inside:avoid}body:not(.fm) #modal{display:none!important}body.fm main{display:none}body.fm #modal{position:static;background:none;padding:0}body.fm .tw{max-height:none}}
+
+</style>
+</head>
+<body>
+<header>
+  <div><h1>Monitor CAE · Receta Completa</h1><div class="sub">Coordinación de Abasto y Equipamiento – OOAD Yucatán</div></div>
+  <div class="sp"></div>
+  <span class="badge" id="bMode"></span>
+  <span class="badge" id="bUser"></span>
+  <button class="sec min" id="btnRef">↻ Actualizar</button>
+  <button class="sec min" id="btnOut">Cambiar perfil</button>
+</header>
+
+<main>
+<!-- ============ PERFIL ============ -->
+<section id="vLogin" class="card login">
+  <h2 style="margin-top:0;color:var(--v)">¿Quién captura?</h2>
+  <label>Perfil</label>
+  <select id="lPerfil">
+    <option value="UNIDAD">Unidad médica</option>
+    <option value="CAE">Coordinación de Abasto (CAE)</option>
+  </select>
+  <div id="lUniBox">
+    <label>Unidad médica</label><select id="lUnidad"></select>
+    <label>Rol</label>
+    <select id="lRol">
+      <option value="ADM">Administrador(a) – Gestión del medicamento</option>
+      <option value="TAOD">TAOD – Contacto y seguimiento al paciente</option>
+      <option value="FAR">Coordinador(a) de Farmacia – Resguardo y entrega</option>
+    </select>
+  </div>
+  <div id="lPinBox" class="hide"><label>PIN de Coordinación de Abasto</label><input id="lPin" type="password" inputmode="numeric"></div>
+  <label>Nombre de quien captura</label><input id="lNombre" placeholder="Nombre y apellido">
+  <div class="row" style="margin-top:14px"><button id="lEntrar">Entrar</button></div>
+  <p class="mut" id="lHint"></p>
+</section>
+
+<!-- ============ APP ============ -->
+<section id="vApp" class="hide">
+  <div class="tabs" id="tabs">
+    <button data-t="lista" class="on">Recetas</button>
+    <button data-t="caratula" data-cae>Carátula CAE</button>
+    <button data-t="resumen" data-cae>Resumen por unidad</button>
+    <button data-t="carga" data-cae>Cargar RC</button>
+    <button data-t="config" data-cae>Configuración</button>
+  </div>
+
+  <div id="tLista">
+    <div class="kpis" id="kpis"></div>
+    <div class="card">
+      <div class="row">
+        <div id="fUniBox"><label>Unidad</label><select id="fUnidad"></select></div>
+        <div><label>Estatus Monitor</label><select id="fEst"><option value="">Todos</option><option>REGISTRADA</option><option>EN GESTIÓN</option><option>EN SITIO</option><option>FINALIZADA</option></select></div>
+        <div><label>Mostrar</label><select id="fVer"><option value="">Todo</option><option value="mio">Pendiente de mi rubro</option><option value="pla" data-cae>Pendiente de actualizar en plataforma</option></select></div>
+        <div style="flex:2"><label>Buscar (folio, paciente, clave, medicamento)</label><input id="fTxt"></div>
+        <div style="flex:0 0 auto" data-cae><button class="dor" id="btnExp">⬇ Exportar para plataforma</button> <button class="sec" id="btnBD">⬇ Base completa (Excel)</button></div>
+      </div>
+    </div>
+    <div class="tw"><table><thead><tr>
+      <th>Días</th><th>Unidad</th><th>Folio</th><th>Paciente</th><th>Clave / Medicamento</th><th>Pzas</th>
+      <th>Acción sugerida CAE</th><th>Rubros</th><th>Estatus RC</th><th>Estatus Monitor</th><th data-cae>Plataforma</th>
+    </tr></thead><tbody id="tb"></tbody></table></div>
+    <p class="mut" id="cnt"></p>
+  </div>
+
+  <div id="tCaratula" class="hide">
+    <div class="card"><div class="row" style="align-items:center">
+      <h2 style="margin:0;color:var(--v);flex:3">Carátula de monitoreo · Receta Completa</h2>
+      <div style="flex:0 0 auto"><label>Meta de gestión (días)</label><input id="kMeta" type="number" min="1" value="2" style="width:80px"></div>
+      <div style="flex:0 0 auto"><button class="sec" id="btnBD2">⬇ Base completa (Excel)</button></div></div>
+      <div class="kpis" id="kGlobal" style="margin-top:12px"></div></div>
+    <div class="grid2">
+      <div class="card"><h3 class="ct">Cumplimiento por unidad (estatus de cada renglón)</h3><div id="gEst"></div>
+        <div class="leg"><span class="REGISTRADA"></span>Registrada <span class="EN_GESTION"></span>En gestión <span class="EN_SITIO"></span>En sitio <span class="FINALIZADA"></span>Finalizada</div></div>
+      <div class="card"><h3 class="ct">Índice de eficiencia por unidad</h3><div id="gEf"></div>
+        <p class="mut">Índice = 30% gestión oportuna (Administrador) + 20% contacto efectivo (TAOD) + 40% entrega (Farmacia) + 10% entregas con evidencia. Verde ≥ 80, amarillo 60–79, rojo &lt; 60.</p></div>
+    </div>
+    <div class="card"><h3 class="ct">Indicadores por unidad y por rol</h3>
+      <div class="tw"><table><thead><tr><th>Unidad</th><th>Renglones</th><th>Gestión capturada</th><th>Gestión oportuna</th><th>Días prom. a gestión</th><th>Contacto efectivo</th><th>Entregadas</th><th>Con evidencia</th><th>Índice</th><th>Retroalimentación</th></tr></thead><tbody id="tbEf"></tbody></table></div></div>
+    <div class="card"><h3 class="ct">Responsables con gestiones pendientes o fuera de meta</h3>
+      <p class="mut">Renglones sin gestión con más días de la meta desde que se cargaron, y gestiones capturadas fuera de meta, por unidad.</p>
+      <div class="tw"><table><thead><tr><th>Unidad</th><th>Sin gestión fuera de meta</th><th>Gestionados fuera de meta</th><th>Quién capturó la gestión</th><th>Sin contacto</th><th>Localizados sin entregar</th></tr></thead><tbody id="tbRet"></tbody></table></div></div>
+  </div>
+
+  <div id="tResumen" class="hide">
+    <div class="card"><h3 style="margin-top:0;color:var(--v)">Avance por unidad médica</h3>
+    <div class="tw"><table><thead><tr><th>Unidad</th><th>Renglones</th><th>Folios</th><th>REGISTRADA</th><th>EN GESTIÓN</th><th>EN SITIO</th><th>FINALIZADA</th><th>Sin gestión (Admin)</th><th>Sin contacto (TAOD)</th><th>Sin entrega (Farmacia)</th><th>Por actualizar en plataforma</th><th>% avance</th></tr></thead><tbody id="tbRes"></tbody></table></div></div>
+  </div>
+
+  <div id="tCarga" class="hide">
+    <div class="card">
+      <h3 style="margin-top:0;color:var(--v)">Cargar reporte RC</h3>
+      <p>Selecciona el <b>RC_ddmmaaaa_hhmmss.xlsx</b> exportado de la plataforma, o el <b>RC_PLATAFORMA_…xlsx</b> ya trabajado (si trae la columna <i>Acciones</i>, se muestra a las unidades como acción sugerida). También acepta CSV.</p>
+      <p class="mut">Se cargan los renglones que no están FINALIZADOS. Si un folio + clave ya existe, solo se actualizan los datos del RC (estatus, días, acción sugerida); lo que capturaron las unidades no se borra.</p>
+      <input type="file" id="fileRC" accept=".xlsx,.xls,.csv">
+      <div id="prev" class="mut" style="margin-top:10px"></div>
+      <div class="row" style="margin-top:10px"><button id="btnImp" disabled>Subir a la base de datos</button></div>
+    </div>
+    <div class="card" id="demoBox">
+      <h3 style="margin-top:0;color:var(--v)">Datos de ejemplo</h3>
+      <p class="mut">Genera 40 renglones ficticios para presentar el flujo con los tres roles sin usar datos reales de pacientes.</p>
+      <button class="sec" id="btnDemo">Generar datos de ejemplo</button> <button class="sec" id="btnBorrar">Borrar toda la base</button>
+    </div>
+  </div>
+
+  <div id="tConfig" class="hide">
+    <div class="card" id="cGas"><h3 style="margin-top:0;color:var(--v)">Base de datos: Google Sheets</h3>
+      <p>Esta página está publicada con Apps Script y guarda todo en tu hoja de cálculo de Google (hojas <b>RC</b> y <b>Bitacora</b>). Las evidencias se guardan en la carpeta de Drive <b>MonitorCAE_Evidencias</b>.</p>
+      <button class="sec" id="btnHoja">Abrir la hoja de cálculo</button></div>
+    <div class="card" id="cLocal">
+      <h3 style="margin-top:0;color:var(--v)">Base de datos</h3>
+      <label>Modo</label>
+      <select id="cMode">
+        <option value="demo">DEMO – solo en este navegador (para pruebas)</option>
+        <option value="sharepoint">SharePoint / Microsoft Lists (IMSS)</option>
+        <option value="google">Google Sheets (Apps Script)</option>
+      </select>
+      <div id="cSP">
+        <label>URL del sitio de SharePoint</label><input id="cSite" placeholder="https://imssmx.sharepoint.com/sites/AbastoYucatan">
+        <label>Nombre de la lista</label><input id="cList" value="MonitorCAE">
+        <p class="mut">La página debe abrirse desde el mismo sitio de SharePoint (por ejemplo, guardada en Activos del sitio) para usar la sesión institucional de cada usuario.</p>
+        <button class="sec" id="btnSetup">Crear lista y columnas en SharePoint</button>
+      </div>
+      <div id="cGG">
+        <label>URL de la aplicación web de Apps Script</label><input id="cGUrl" placeholder="https://script.google.com/macros/s/…/exec">
+        <label>Clave de acceso (la misma que pusiste en Code.gs)</label><input id="cGKey">
+      </div>
+      <div class="row" style="margin-top:12px"><button id="btnSaveCfg">Guardar y conectar</button></div>
+      <p class="warn" style="margin-top:12px">Esta configuración se guarda en el navegador. Para que las unidades no tengan que capturarla, edita la sección <b>CONFIG_FIJA</b> al inicio del código de la página antes de publicarla.</p>
+    </div>
+  </div>
+</section>
+</main>
+
+<div id="modal" class="modal hide"><div class="mbox" id="mbox"></div></div>
+<div id="toast" class="toast hide"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script>
+/* =====================================================================
+   CONFIG_FIJA: rellenar antes de publicar para que todos usen la misma base
+   mode: 'demo' | 'sharepoint' | 'google'
+   ===================================================================== */
+const CONFIG_FIJA = { mode: '', spSite: '', spList: 'MonitorCAE', gUrl: '', gKey: '' };
+
+/* ---------------- campos ---------------- */
+const F_BASE = ['id','ooad','fechaRegistro','diasRegistro','paciente','curp','telefono','telefono2','correo','dependencia','unidad','folio',
+  'fechaExpedicion','tipoReceta','clave','descripcion','piezas','estatusRC','estatusRecetaRC','accionCAE','fechaCarga','fechaAlta'];
+const F_G = ['g_accion','g_fechaDisponible','g_obs','g_resp','g_reg'];
+const F_C = ['c_fecha','c_medio','c_resultado','c_fechaCita','c_obs','c_resp','c_reg'];
+const F_E = ['e_fechaResguardo','e_fechaEntrega','e_piezas','e_receptor','e_evidencia','e_obs','e_resp','e_reg'];
+const F_P = ['p_estatus','p_fecha','p_resp'];
+const FIELDS = [...F_BASE, ...F_G, ...F_C, ...F_E, ...F_P];
+const BASE_UPD = ['ooad','fechaRegistro','diasRegistro','paciente','curp','telefono','telefono2','correo','dependencia','unidad','fechaExpedicion',
+  'tipoReceta','descripcion','piezas','estatusRC','estatusRecetaRC','accionCAE','fechaCarga'];
+
+const OPC = {
+  g_accion: ['Existencia en farmacia de la unidad','Traspaso desde otra unidad','Orden / remisión de Suministro (almacén delegacional)',
+    'Compra emergente','Clave sustituta indicada por el médico','Medicamento ya entregado – cerrar folio','Otro (ver observaciones)'],
+  c_medio: ['Llamada telefónica','WhatsApp / SMS','Correo electrónico','Presencial en la unidad'],
+  c_resultado: ['Localizado – acudirá por el medicamento','Localizado – cita programada para entrega','No contesta / no localizado (reintentar)',
+    'Número incorrecto o sin datos de contacto','Paciente ya adquirió o recibió el medicamento','Paciente ya no lo requiere / rechaza','Otro (ver observaciones)']
+};
+const ROL = { ADM: 'Administrador(a)', TAOD: 'TAOD', FAR: 'Coord. de Farmacia', CAE: 'Coordinación de Abasto' };
+const RANK = { 'REGISTRADA': 0, 'EN GESTIÓN': 1, 'EN GESTION': 1, 'EN SITIO': 2, 'FINALIZADA': 3 };
+const EST = ['REGISTRADA', 'EN GESTIÓN', 'EN SITIO', 'FINALIZADA'];
+
+/* ---------------- utilidades ---------------- */
+const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const LS = { get(k, d) { try { const v = localStorage.getItem('mcae_' + k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
+  set(k, v) { try { localStorage.setItem('mcae_' + k, JSON.stringify(v)); } catch (e) { } } };
+const hoy = () => { const d = new Date(), p = n => String(n).padStart(2, '0'); return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`; };
+const ahora = () => { const d = new Date(), p = n => String(n).padStart(2, '0'); return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`; };
+const norm = s => String(s ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]/g, '');
+const cls = e => String(e || 'REGISTRADA').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/ /g, '_');
+const chip = e => `<span class="chip ${cls(e)}">${esc(e || 'REGISTRADA')}</span>`;
+function toast(m, ms = 3200) { const t = $('#toast'); t.textContent = m; t.classList.remove('hide'); clearTimeout(t._h); t._h = setTimeout(() => t.classList.add('hide'), ms); }
+function fmtFecha(v) {
+  if (v == null || v === '') return '';
+  if (v instanceof Date) return v.toLocaleDateString('es-MX');
+  if (typeof v === 'number' && v > 20000 && v < 80000) { const d = new Date(Math.round((v - 25569) * 864e5)); return d.toLocaleDateString('es-MX', { timeZone: 'UTC' }); }
+  return String(v);
+}
+function diasDesde(f) { if (!f) return null; const d = new Date(f + 'T00:00:00'); return isNaN(d) ? null : Math.floor((Date.now() - d) / 864e5); }
+
+/* ---------------- estatus ---------------- */
+function estatusMonitor(r) {
+  let k = 0;
+  if (r.g_accion || r.c_resultado) k = 1;
+  if (r.e_fechaResguardo) k = 2;
+  if (r.e_fechaEntrega) k = 3;
+  if (/ya adquiri|ya no lo requiere/i.test(r.c_resultado || '')) k = Math.max(k, 3);
+  if (/ya entregado/i.test(r.g_accion || '')) k = Math.max(k, 3);
+  k = Math.max(k, RANK[String(r.estatusRC || '').toUpperCase()] ?? 0);
+  return EST[k];
+}
+const enPlataforma = r => r.p_estatus || r.estatusRC || 'REGISTRADA';
+const pendPlataforma = r => (RANK[estatusMonitor(r)] ?? 0) > (RANK[String(enPlataforma(r)).toUpperCase()] ?? 0);
+function pendRol(r, rol) {
+  if (estatusMonitor(r) === 'FINALIZADA' && rol !== 'CAE') return false;
+  if (rol === 'ADM') return !r.g_accion;
+  if (rol === 'TAOD') return !r.c_resultado || /no contesta/i.test(r.c_resultado);
+  if (rol === 'FAR') return !r.e_fechaEntrega && !/ya adquiri|ya no lo requiere/i.test(r.c_resultado || '');
+  if (rol === 'CAE') return pendPlataforma(r);
+  return false;
+}
+
+/* =====================================================================
+   ADAPTADORES DE BASE DE DATOS
+   interfaz: list() -> [reg], upsertMany(regs), update(id, patch), upload(id, file) -> url
+   ===================================================================== */
+const DemoDB = {
+  name: 'DEMO (este navegador)',
+  _all() { return LS.get('demo_db', {}); }, _save(d) { LS.set('demo_db', d); },
+  async list() { return Object.values(this._all()); },
+  async upsertMany(regs) { const d = this._all(); let n = 0, u = 0;
+    for (const r of regs) { if (d[r.id]) { BASE_UPD.forEach(k => d[r.id][k] = r[k]); u++; } else { d[r.id] = r; n++; } } this._save(d); return { nuevos: n, actualizados: u }; },
+  async update(id, patch) { const d = this._all(); if (!d[id]) throw new Error('No existe ' + id); Object.assign(d[id], patch); this._save(d); return d[id]; },
+  async upload(id, file) { return await imgDataUrl(file, 900, .6); },
+  clear() { LS.set('demo_db', {}); }
+};
+
+const GAS = typeof google !== 'undefined' && google.script && google.script.run;
+function gs(fn, ...args) { return new Promise((ok, ko) => google.script.run.withSuccessHandler(ok).withFailureHandler(e => ko(new Error(e && e.message || e)))[fn](...args)); }
+const AppsDB = {
+  name: 'Google Sheets',
+  async list() { return await gs('apiList'); },
+  async upsertMany(regs) { let n = 0, u = 0;
+    for (let i = 0; i < regs.length; i += 400) { const x = await gs('apiUpsertMany', regs.slice(i, i + 400), BASE_UPD); n += x.nuevos; u += x.actualizados; }
+    return { nuevos: n, actualizados: u }; },
+  async update(id, patch) { return await gs('apiUpdate', id, patch); },
+  async upload(id, file) { const b64 = (await imgDataUrl(file, 1400, .72)).split(',')[1];
+    return await gs('apiUpload', 'evidencia_' + id.replace(/[^\w-]/g, '_') + '_' + Date.now() + '.jpg', b64, 'image/jpeg'); },
+  async clear(pin) { return await gs('apiBorrarTodo', pin); }
+};
+const GoogleDB = {
+  name: 'Google Sheets',
+  url: '', key: '',
+  async call(action, payload = {}) {
+    const r = await fetch(this.url, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action, key: this.key, ...payload }) });
+    const j = await r.json(); if (!j.ok) throw new Error(j.error || 'Error en Apps Script'); return j.data;
+  },
+  async list() { return await this.call('list'); },
+  async upsertMany(regs) { let n = 0, u = 0;
+    for (let i = 0; i < regs.length; i += 300) { const x = await this.call('upsertMany', { regs: regs.slice(i, i + 300), baseUpd: BASE_UPD }); n += x.nuevos; u += x.actualizados; }
+    return { nuevos: n, actualizados: u }; },
+  async update(id, patch) { return await this.call('update', { id, patch }); },
+  async upload(id, file) { const b64 = (await imgDataUrl(file, 1400, .72)).split(',')[1];
+    return await this.call('upload', { id, name: 'evidencia_' + id.replace(/[^\w-]/g, '_') + '_' + Date.now() + '.jpg', b64, mime: 'image/jpeg' }); }
+};
+
+const SharePointDB = {
+  name: 'SharePoint',
+  site: '', list: 'MonitorCAE', _dig: null, _digT: 0, _map: {},
+  H: { Accept: 'application/json;odata=nometadata', 'Content-Type': 'application/json;odata=nometadata' },
+  api(p) { return this.site.replace(/\/$/, '') + '/_api/web/' + p; },
+  L() { return `lists/getbytitle('${this.list.replace(/'/g, "''")}')`; },
+  async digest() {
+    if (this._dig && Date.now() - this._digT < 20 * 60e3) return this._dig;
+    const r = await fetch(this.site.replace(/\/$/, '') + '/_api/contextinfo', { method: 'POST', credentials: 'include', headers: { Accept: this.H.Accept } });
+    if (!r.ok) throw new Error('No se pudo obtener sesión de SharePoint (' + r.status + ')');
+    this._dig = (await r.json()).FormDigestValue; this._digT = Date.now(); return this._dig;
+  },
+  async req(method, p, body, extra = {}) {
+    const h = { ...this.H, ...extra }; if (method !== 'GET') h['X-RequestDigest'] = await this.digest();
+    const r = await fetch(p.startsWith('http') ? p : this.api(p), { method, credentials: 'include', headers: h, body: body == null ? undefined : (body instanceof Blob || body instanceof ArrayBuffer ? body : JSON.stringify(body)) });
+    if (!r.ok) { let t = ''; try { t = (await r.json())['odata.error']?.message?.value || ''; } catch (e) { } throw new Error(`SharePoint ${r.status} ${t}`); }
+    return r.status === 204 ? null : r.json().catch(() => null);
+  },
+  async list() {
+    const out = []; let url = this.api(this.L() + '/items?$top=5000&$select=ID,Title,' + FIELDS.filter(f => f !== 'id').join(','));
+    while (url) { const j = await this.req('GET', url); for (const it of j.value) { const r = { id: it.Title, _spid: it.ID }; FIELDS.forEach(f => { if (f !== 'id') r[f] = it[f] ?? ''; }); out.push(r); this._map[r.id] = it.ID; } url = j['odata.nextLink']; }
+    return out;
+  },
+  toItem(r, keys) { const o = {}; keys.forEach(k => { if (k === 'id') o.Title = r.id; else o[k] = r[k] == null ? '' : String(r[k]); }); return o; },
+  async upsertMany(regs) {
+    if (!Object.keys(this._map).length) await this.list();
+    let n = 0, u = 0, i = 0;
+    const work = async () => { while (i < regs.length) { const r = regs[i++];
+      if (this._map[r.id]) { await this.req('POST', this.L() + `/items(${this._map[r.id]})`, this.toItem(r, BASE_UPD), { 'X-HTTP-Method': 'MERGE', 'IF-MATCH': '*' }); u++; }
+      else { const j = await this.req('POST', this.L() + '/items', this.toItem(r, FIELDS)); this._map[r.id] = j.ID; n++; } } };
+    await Promise.all([work(), work(), work(), work()]);
+    return { nuevos: n, actualizados: u };
+  },
+  async update(id, patch) {
+    if (!this._map[id]) await this.list();
+    await this.req('POST', this.L() + `/items(${this._map[id]})`, this.toItem(patch, Object.keys(patch)), { 'X-HTTP-Method': 'MERGE', 'IF-MATCH': '*' });
+    return patch;
+  },
+  async upload(id, file) {
+    if (!this._map[id]) await this.list();
+    const blob = await (await fetch(await imgDataUrl(file, 1400, .72))).blob();
+    const name = 'evidencia_' + Date.now() + '.jpg';
+    const j = await this.req('POST', this.L() + `/items(${this._map[id]})/AttachmentFiles/add(FileName='${name}')`, blob, { 'Content-Type': 'application/octet-stream' });
+    return new URL(this.site).origin + j.ServerRelativeUrl;
+  },
+  async setup() {
+    try { await this.req('GET', this.L() + '?$select=Id'); }
+    catch (e) { await this.req('POST', 'lists', { Title: this.list, BaseTemplate: 100, AllowContentTypes: true, ContentTypesEnabled: false }); }
+    const ex = new Set((await this.req('GET', this.L() + '/fields?$select=InternalName')).value.map(f => f.InternalName));
+    let c = 0;
+    for (const f of FIELDS) { if (f === 'id' || ex.has(f)) continue;
+      const xml = `<Field Type="Note" Name="${f}" StaticName="${f}" DisplayName="${f}" NumLines="4" RichText="FALSE" />`;
+      await this.req('POST', this.L() + '/fields/createfieldasxml', { parameters: { SchemaXml: xml, Options: 0 } }); c++; }
+    return c;
+  }
+};
+
+function imgDataUrl(file, max, q) {
+  return new Promise((ok, ko) => {
+    if (!file.type.startsWith('image/')) { const fr = new FileReader(); fr.onload = () => ok(fr.result); fr.onerror = ko; fr.readAsDataURL(file); return; }
+    const im = new Image(); im.onload = () => { const s = Math.min(1, max / Math.max(im.width, im.height)); const c = document.createElement('canvas');
+      c.width = Math.round(im.width * s); c.height = Math.round(im.height * s); c.getContext('2d').drawImage(im, 0, 0, c.width, c.height); ok(c.toDataURL('image/jpeg', q)); URL.revokeObjectURL(im.src); };
+    im.onerror = ko; im.src = URL.createObjectURL(file);
+  });
+}
+
+/* ---------------- estado ---------------- */
+let CFG = Object.assign({ mode: 'demo', spSite: '', spList: 'MonitorCAE', gUrl: '', gKey: '' }, LS.get('cfg', {}));
+if (CONFIG_FIJA.mode) CFG = { ...CFG, ...Object.fromEntries(Object.entries(CONFIG_FIJA).filter(([, v]) => v)) };
+let DB = DemoDB, DATA = [], USER = LS.get('user', null), PREV = null;
+
+function conectar() {
+  if (GAS) DB = AppsDB;
+  else if (CFG.mode === 'google') { GoogleDB.url = CFG.gUrl; GoogleDB.key = CFG.gKey; DB = GoogleDB; }
+  else if (CFG.mode === 'sharepoint') { SharePointDB.site = CFG.spSite || location.href.split('/SiteAssets')[0].split('/Shared')[0]; SharePointDB.list = CFG.spList || 'MonitorCAE'; DB = SharePointDB; }
+  else DB = DemoDB;
+  $('#bMode').textContent = 'Base: ' + DB.name;
+}
+async function cargar() {
+  try { $('#tb').innerHTML = '<tr><td colspan="11" class="mut">Cargando…</td></tr>'; DATA = await DB.list(); }
+  catch (e) { DATA = []; toast('No se pudo leer la base: ' + e.message, 7000); }
+  llenarUnidades(); render();
+}
+
+/* ---------------- perfil ---------------- */
+function llenarUnidades() {
+  const us = [...new Set(DATA.map(r => r.unidad).filter(Boolean))].sort();
+  const sel = $('#lUnidad'), v = sel.value || USER?.unidad;
+  sel.innerHTML = us.length ? us.map(u => `<option>${esc(u)}</option>`).join('') : '<option value="">(aún no hay recetas cargadas)</option>';
+  if (v && us.includes(v)) sel.value = v;
+  const f = $('#fUnidad'), fv = f.value; f.innerHTML = '<option value="">Todas</option>' + us.map(u => `<option>${esc(u)}</option>`).join(''); if (us.includes(fv)) f.value = fv;
+}
+function mostrarLogin() { $('#vLogin').classList.remove('hide'); $('#vApp').classList.add('hide'); $('#lUniBox').classList.toggle('hide', $('#lPerfil').value === 'CAE');
+  if (USER) { $('#lPerfil').value = USER.rol === 'CAE' ? 'CAE' : 'UNIDAD'; $('#lNombre').value = USER.nombre || ''; if (USER.rol !== 'CAE') $('#lRol').value = USER.rol; $('#lUniBox').classList.toggle('hide', USER.rol === 'CAE'); } $('#lPinBox').classList.toggle('hide', $('#lPerfil').value !== 'CAE'); $('#lPin').value = ''; }
+async function entrar() {
+  const p = $('#lPerfil').value, n = $('#lNombre').value.trim();
+  if (p === 'CAE' && GAS) { let ok = false; try { ok = await gs('apiPin', $('#lPin').value); } catch (e) { } if (!ok) return toast('PIN incorrecto'); }
+  if (!n) return toast('Escribe tu nombre');
+  if (p === 'UNIDAD' && !$('#lUnidad').value) return toast('Selecciona la unidad médica');
+  USER = p === 'CAE' ? { rol: 'CAE', nombre: n } : { rol: $('#lRol').value, unidad: $('#lUnidad').value, nombre: n };
+  LS.set('user', USER); abrirApp();
+}
+function abrirApp() {
+  $('#vLogin').classList.add('hide'); $('#vApp').classList.remove('hide');
+  const cae = USER.rol === 'CAE';
+  $$('[data-cae]').forEach(e => e.classList.toggle('hide', !cae));
+  $('#fUniBox').classList.toggle('hide', !cae);
+  $('#bUser').textContent = cae ? `${USER.nombre} · CAE` : `${USER.nombre} · ${ROL[USER.rol]} · ${USER.unidad}`;
+  tab('lista'); render();
+}
+
+/* ---------------- lista ---------------- */
+function visibles() {
+  const cae = USER?.rol === 'CAE';
+  return DATA.filter(r => cae || r.unidad === USER?.unidad);
+}
+function filtrar(rs) {
+  const u = $('#fUnidad').value, e = $('#fEst').value, v = $('#fVer').value, t = norm($('#fTxt').value);
+  return rs.filter(r => (!u || r.unidad === u) && (!e || estatusMonitor(r) === e)
+    && (!v || (v === 'mio' && pendRol(r, USER.rol === 'CAE' ? 'CAE' : USER.rol)) || (v === 'pla' && pendPlataforma(r)))
+    && (!t || norm([r.folio, r.paciente, r.clave, r.descripcion, r.curp].join(' ')).includes(t)));
+}
+function dias(r) { const d = parseInt(r.diasRegistro) || 0, c = diasDesde(r.fechaCarga); return d + (c || 0); }
+function render() {
+  if (!USER || $('#vApp').classList.contains('hide')) return;
+  const base = visibles(), rs = filtrar(base).sort((a, b) => dias(b) - dias(a));
+  const cnt = k => base.filter(r => estatusMonitor(r) === k).length;
+  const mio = base.filter(r => pendRol(r, USER.rol)).length;
+  $('#kpis').innerHTML = [
+    ['', base.length, 'Renglones (folio + clave)', ''],
+    ['reg', cnt('REGISTRADA'), 'REGISTRADA', 'REGISTRADA'], ['ges', cnt('EN GESTIÓN'), 'EN GESTIÓN', 'EN GESTIÓN'],
+    ['sit', cnt('EN SITIO'), 'EN SITIO (en farmacia)', 'EN SITIO'], ['fin', cnt('FINALIZADA'), 'FINALIZADA (entregada)', 'FINALIZADA'],
+    ['pla', mio, USER.rol === 'CAE' ? 'Por actualizar en plataforma' : 'Pendientes de mi rubro', '#']
+  ].map(([c, n, l, f]) => `<div class="kpi ${c}" data-f="${f}"><b>${n}</b><span>${l}</span></div>`).join('');
+  $$('.kpi').forEach(k => k.onclick = () => { const f = k.dataset.f; if (f === '#') { $('#fVer').value = USER.rol === 'CAE' ? 'pla' : 'mio'; $('#fEst').value = ''; } else { $('#fEst').value = f; $('#fVer').value = ''; } render(); });
+  const cae = USER.rol === 'CAE';
+  $('#tb').innerHTML = rs.slice(0, 1500).map(r => {
+    const em = estatusMonitor(r), d = dias(r);
+    return `<tr class="it" data-id="${esc(r.id)}">
+      <td style="color:${d >= 7 ? '#c0392b' : 'inherit'};font-weight:${d >= 7 ? 700 : 400}">${d}</td>
+      <td>${esc(String(r.unidad).replace(/^\d+\s+/, ''))}</td><td>${esc(r.folio)}</td><td>${esc(r.paciente)}</td>
+      <td><b>${esc(r.clave)}</b><br><span class="mut">${esc(String(r.descripcion).slice(0, 70))}</span></td><td>${esc(r.piezas)}</td>
+      <td class="mut" style="max-width:220px">${esc(r.accionCAE || '—')}</td>
+      <td class="dots"><span class="${r.g_accion ? 'ok' : ''}" title="Gestión (Administrador)">G</span><span class="${r.c_resultado ? 'ok' : ''}" title="Contacto (TAOD)">C</span><span class="${r.e_fechaEntrega ? 'ok' : ''}" title="Entrega (Farmacia)">E</span></td>
+      <td>${chip(r.estatusRC)}</td><td>${chip(em)}</td>
+      ${cae ? `<td>${pendPlataforma(r) ? '<span class="chip" style="background:#f7e3c4">Actualizar</span>' : '<span class="mut">al día</span>'}</td>` : '<td class="hide"></td>'}
+    </tr>`; }).join('') || '<tr><td colspan="11" class="mut">Sin renglones con estos filtros.</td></tr>';
+  $('#cnt').textContent = `${rs.length} renglones mostrados${rs.length > 1500 ? ' (se listan los primeros 1,500; usa los filtros)' : ''} · días = días desde el registro en Receta Completa`;
+  $$('#tb tr.it').forEach(tr => tr.onclick = () => abrir(tr.dataset.id));
+  if (cae) { resumen(); if (!$('#tCaratula').classList.contains('hide')) caratula(); }
+}
+
+/* ---------------- detalle / captura ---------------- */
+function campo(k, lab, tipo, r, edit, extra = '') {
+  const v = r[k] ?? '', dis = edit ? '' : 'disabled';
+  if (tipo === 'sel') return `<label>${lab}</label><select data-k="${k}" ${dis}><option value=""></option>${OPC[k].map(o => `<option ${o === v ? 'selected' : ''}>${esc(o)}</option>`).join('')}</select>`;
+  if (tipo === 'area') return `<label>${lab}</label><textarea data-k="${k}" ${dis}>${esc(v)}</textarea>`;
+  return `<label>${lab}</label><input data-k="${k}" type="${tipo}" value="${esc(v)}" ${dis} ${extra}>`;
+}
+function firma(r, p) { return r[p + '_resp'] ? `<p class="mut">Capturó: ${esc(r[p + '_resp'])} · ${esc(r[p + '_reg'])}</p>` : ''; }
+function abrir(id) {
+  const r = DATA.find(x => x.id === id); if (!r) return;
+  const rol = USER.rol, cae = rol === 'CAE', eG = rol === 'ADM' || cae, eC = rol === 'TAOD' || cae, eE = rol === 'FAR' || cae;
+  const tel = [r.telefono, r.telefono2].filter(Boolean).map(t => `<a href="tel:${esc(t)}" target="_top">${esc(t)}</a>`).join(' / ');
+  $('#mbox').innerHTML = `
+    <div class="row" style="align-items:center"><h2 style="margin:0;color:var(--v);flex:3">Folio ${esc(r.folio)} · ${esc(r.clave)}</h2>
+      <div style="flex:0 0 auto">${chip(estatusMonitor(r))}</div><button class="sec" style="flex:0 0 auto" id="mX">Cerrar</button></div>
+    <div class="info">
+      <div><b>Paciente</b>${esc(r.paciente)}</div><div><b>CURP</b>${esc(r.curp)}</div><div><b>Teléfono</b>${tel || '—'}</div><div><b>Correo</b>${esc(r.correo || '—')}</div>
+      <div><b>Unidad</b>${esc(r.unidad)}</div><div><b>Receta</b>${esc(r.tipoReceta)} · expedida ${esc(fmtFecha(r.fechaExpedicion))}</div>
+      <div><b>Registro en Receta Completa</b>${esc(fmtFecha(r.fechaRegistro))} (${dias(r)} días)</div><div><b>Estatus en RC</b>${chip(r.estatusRC)} ${esc(r.estatusRecetaRC || '')}</div>
+      <div style="grid-column:1/-1"><b>Medicamento</b>${esc(r.clave)} – ${esc(r.descripcion)} · <b style="display:inline;color:var(--tx)">${esc(r.piezas)} piezas</b></div>
+      ${r.accionCAE ? `<div style="grid-column:1/-1"><b>Acción sugerida por CAE</b>${esc(r.accionCAE)}</div>` : ''}
+    </div>
+    <div class="grid3">
+      <div class="sec ${rol === 'ADM' ? 'mine' : ''} ${eG ? '' : 'lock'}" data-p="g"><h3>1 · Gestión</h3><div class="mut">Administrador(a): conseguir el medicamento</div>
+        ${campo('g_accion', '¿Cómo se obtiene el medicamento?', 'sel', r, eG)}
+        ${campo('g_fechaDisponible', 'Fecha estimada en farmacia', 'date', r, eG)}
+        ${campo('g_obs', 'Observaciones (remisión, unidad que traspasa, núm. de compra…)', 'area', r, eG)}
+        ${firma(r, 'g')}${eG ? '<button data-save="g">Guardar gestión</button>' : ''}</div>
+      <div class="sec ${rol === 'TAOD' ? 'mine' : ''} ${eC ? '' : 'lock'}" data-p="c"><h3>2 · Contacto y seguimiento</h3><div class="mut">TAOD: contactar y orientar al paciente</div>
+        ${campo('c_fecha', 'Fecha de contacto', 'date', r, eC)}
+        ${campo('c_medio', 'Medio', 'sel', r, eC)}
+        ${campo('c_resultado', 'Resultado', 'sel', r, eC)}
+        ${campo('c_fechaCita', 'Fecha acordada para entrega', 'date', r, eC)}
+        ${campo('c_obs', 'Observaciones', 'area', r, eC)}
+        ${firma(r, 'c')}${eC ? '<button data-save="c">Guardar contacto</button>' : ''}</div>
+      <div class="sec ${rol === 'FAR' ? 'mine' : ''} ${eE ? '' : 'lock'}" data-p="e"><h3>3 · Resguardo y entrega</h3><div class="mut">Coord. de Farmacia: resguardar y entregar</div>
+        ${campo('e_fechaResguardo', 'Fecha en que llegó / se resguardó en farmacia', 'date', r, eE)}
+        ${campo('e_fechaEntrega', 'Fecha de entrega al paciente', 'date', r, eE)}
+        ${campo('e_piezas', 'Piezas entregadas', 'number', r, eE, 'min="0"')}
+        ${campo('e_receptor', 'Quién recibió (paciente o familiar)', 'text', r, eE)}
+        <label>Evidencia (foto del vale o receta firmada)</label>
+        ${eE ? '<input type="file" id="eFile" accept="image/*,.pdf" capture="environment">' : ''}
+        <div class="evi" id="eVis">${r.e_evidencia ? (String(r.e_evidencia).startsWith('data:image') || /\.(jpe?g|png)$/i.test(r.e_evidencia) ? `<a href="${esc(r.e_evidencia)}" target="_blank"><img src="${esc(r.e_evidencia)}"></a>` : `<a href="${esc(r.e_evidencia)}" target="_blank">Ver evidencia</a>`) : '<span class="mut">Sin evidencia</span>'}</div>
+        ${campo('e_obs', 'Observaciones', 'area', r, eE)}
+        ${firma(r, 'e')}${eE ? '<button data-save="e">Guardar entrega</button>' : ''}</div>
+    </div>
+    ${cae ? `<div class="sec mine" style="margin-top:12px"><h3>Plataforma Receta Completa (CAE)</h3>
+      <div class="row"><div><label>Estatus que ya quedó en rc.apps.ocp.imss.gob.mx</label><select id="pEst">${EST.map(e => `<option ${e === enPlataforma(r) ? 'selected' : ''}>${e}</option>`).join('')}</select></div>
+      <div style="flex:0 0 auto"><button class="dor" id="pSave">Marcar como actualizado</button></div></div>
+      ${r.p_resp ? `<p class="mut">Último cambio en plataforma: ${esc(r.p_estatus)} · ${esc(r.p_resp)} · ${esc(r.p_fecha)}</p>` : ''}</div>` : ''}`;
+  $('#modal').classList.remove('hide');
+  $('#mX').onclick = cerrar;
+  $$('[data-save]').forEach(b => b.onclick = () => guardar(r, b.dataset.save, b));
+  if ($('#pSave')) $('#pSave').onclick = () => guardarPatch(r, { p_estatus: $('#pEst').value, p_fecha: ahora(), p_resp: USER.nombre }, $('#pSave'));
+}
+function cerrar() { $('#modal').classList.add('hide'); document.body.classList.remove('fm'); }
+async function guardar(r, p, btn) {
+  const box = $(`.sec[data-p="${p}"]`), patch = {};
+  box.querySelectorAll('[data-k]').forEach(i => patch[i.dataset.k] = i.value.trim());
+  if (p === 'g' && !patch.g_accion) return toast('Indica cómo se obtiene el medicamento');
+  if (p === 'c' && (!patch.c_fecha || !patch.c_resultado)) return toast('Captura la fecha y el resultado del contacto');
+  if (p === 'e') {
+    if (patch.e_fechaEntrega && !patch.e_piezas) return toast('Indica las piezas entregadas');
+    if (patch.e_fechaEntrega && !patch.e_fechaResguardo) patch.e_fechaResguardo = patch.e_fechaEntrega;
+    const f = $('#eFile')?.files?.[0];
+    if (f) { btn.disabled = true; btn.textContent = 'Subiendo evidencia…';
+      try { patch.e_evidencia = await DB.upload(r.id, f); } catch (e) { btn.disabled = false; btn.textContent = 'Guardar entrega'; return toast('No se pudo subir la evidencia: ' + e.message, 6000); } }
+    if (patch.e_fechaEntrega && !patch.e_evidencia && !r.e_evidencia && !confirmarSinEvidencia()) { btn.disabled = false; btn.textContent = 'Guardar entrega'; return; }
+  }
+  patch[p + '_resp'] = USER.nombre + (USER.rol === 'CAE' ? ' (CAE)' : ''); patch[p + '_reg'] = ahora();
+  await guardarPatch(r, patch, btn);
+}
+let _sinEvi = false;
+function confirmarSinEvidencia() { if (_sinEvi) return true; _sinEvi = true; toast('Falta la evidencia de entrega. Si de todos modos quieres guardar, vuelve a presionar "Guardar entrega".', 6000); return false; }
+async function guardarPatch(r, patch, btn) {
+  const t = btn.textContent; btn.disabled = true; btn.textContent = 'Guardando…';
+  try { await DB.update(r.id, patch); Object.assign(r, patch); _sinEvi = false; toast('Guardado ✓'); cerrar(); render(); }
+  catch (e) { toast('No se guardó: ' + e.message, 7000); }
+  finally { btn.disabled = false; btn.textContent = t; }
+}
+
+/* ---------------- resumen por unidad ---------------- */
+function resumen() {
+  const g = {};
+  for (const r of DATA) { const u = r.unidad || '(sin unidad)'; (g[u] = g[u] || []).push(r); }
+  const rows = Object.entries(g).sort((a, b) => b[1].length - a[1].length).map(([u, rs]) => {
+    const c = k => rs.filter(r => estatusMonitor(r) === k).length, fin = c('FINALIZADA');
+    return `<tr><td>${esc(u)}</td><td>${rs.length}</td><td>${new Set(rs.map(r => r.folio)).size}</td><td>${c('REGISTRADA')}</td><td>${c('EN GESTIÓN')}</td><td>${c('EN SITIO')}</td><td>${fin}</td>
+      <td>${rs.filter(r => pendRol(r, 'ADM')).length}</td><td>${rs.filter(r => pendRol(r, 'TAOD')).length}</td><td>${rs.filter(r => pendRol(r, 'FAR')).length}</td>
+      <td>${rs.filter(pendPlataforma).length}</td><td><b>${rs.length ? Math.round(fin / rs.length * 100) : 0}%</b></td></tr>`; });
+  $('#tbRes').innerHTML = rows.join('') || '<tr><td colspan="12" class="mut">Sin datos</td></tr>';
+}
+
+/* ---------------- carátula CAE / indicadores ---------------- */
+const pct = (a, b) => b ? Math.round(a / b * 100) : null;
+const fpct = v => v == null ? '—' : v + '%';
+const semc = v => v == null ? '' : v >= 80 ? 's-v' : v >= 60 ? 's-a' : 's-r';
+function diasEntre(a, b) { const x = new Date(String(a).slice(0, 10) + 'T00:00:00'), y = new Date(String(b).slice(0, 10) + 'T00:00:00'); return (isNaN(x) || isNaN(y)) ? null : Math.round((y - x) / 864e5); }
+function indicadores(rs, meta) {
+  const n = rs.length, alta = r => r.fechaAlta || r.fechaCarga;
+  const gest = rs.filter(r => r.g_accion), tG = gest.map(r => diasEntre(alta(r), r.g_reg)).filter(v => v != null);
+  const oport = gest.filter(r => { const d = diasEntre(alta(r), r.g_reg); return d != null && d <= meta; }).length;
+  const sinGFuera = rs.filter(r => !r.g_accion && estatusMonitor(r) !== 'FINALIZADA' && (diasDesde(alta(r)) ?? 0) > meta);
+  const gFuera = gest.filter(r => { const d = diasEntre(alta(r), r.g_reg); return d != null && d > meta; });
+  const contacto = rs.filter(r => /^Localizado|ya adquiri|ya no lo requiere/i.test(r.c_resultado || '')).length;
+  const entreg = rs.filter(r => r.e_fechaEntrega || estatusMonitor(r) === 'FINALIZADA');
+  const evid = entreg.filter(r => r.e_evidencia).length;
+  const vals = { gest: pct(gest.length, n), oport: pct(oport, n), dG: tG.length ? (tG.reduce((a, b) => a + b, 0) / tG.length).toFixed(1) : '—',
+    cont: pct(contacto, n), ent: pct(entreg.length, n), evi: pct(evid, entreg.length) };
+  const idx = n ? Math.round(0.3 * (vals.oport || 0) + 0.2 * (vals.cont || 0) + 0.4 * (vals.ent || 0) + 0.1 * (entreg.length ? vals.evi : 0)) : null;
+  return { n, ...vals, idx, sinGFuera, gFuera, resp: [...new Set(gFuera.map(r => r.g_resp).filter(Boolean))],
+    sinC: rs.filter(r => pendRol(r, 'TAOD') && estatusMonitor(r) !== 'FINALIZADA').length,
+    locSinE: rs.filter(r => /^Localizado/i.test(r.c_resultado || '') && !r.e_fechaEntrega).length };
+}
+function porUnidad() { const g = {}; for (const r of DATA) { const u = r.unidad || '(sin unidad)'; (g[u] = g[u] || []).push(r); } return g; }
+function caratula() {
+  const meta = parseInt($('#kMeta').value) || 2, G = indicadores(DATA, meta), U = porUnidad();
+  const cnt = k => DATA.filter(r => estatusMonitor(r) === k).length;
+  $('#kGlobal').innerHTML = [['', DATA.length, 'Renglones en seguimiento'], ['', new Set(DATA.map(r => r.folio)).size, 'Folios'],
+    ['fin', fpct(pct(cnt('FINALIZADA'), DATA.length)), 'Entregadas / finalizadas'], ['ges', fpct(G.oport), `Gestión oportuna (≤ ${meta} días)`],
+    ['sit', fpct(G.cont), 'Contacto efectivo'], ['pla', DATA.filter(pendPlataforma).length, 'Por actualizar en plataforma'],
+    ['', `<span class="sem ${semc(G.idx)}">${G.idx ?? '—'}</span>`, 'Índice de eficiencia OOAD']]
+    .map(([c, n, l]) => `<div class="kpi ${c}"><b>${n}</b><span>${l}</span></div>`).join('');
+  const lista = Object.entries(U).map(([u, rs]) => ({ u, rs, I: indicadores(rs, meta) }));
+  const col = { 'REGISTRADA': 'var(--reg)', 'EN GESTIÓN': 'var(--ges)', 'EN SITIO': 'var(--sit)', 'FINALIZADA': 'var(--fin)' };
+  $('#gEst').innerHTML = lista.sort((a, b) => b.rs.length - a.rs.length).map(({ u, rs }) => {
+    const seg = EST.map(e => { const k = rs.filter(r => estatusMonitor(r) === e).length; return k ? `<div style="width:${k / rs.length * 100}%;background:${col[e]}" title="${e}: ${k}">${k}</div>` : ''; }).join('');
+    return `<div class="bar"><span class="nm" title="${esc(u)}">${esc(u.replace(/^\d+\s+/, ''))}</span><div class="tr">${seg}</div><span class="vl">${rs.length}</span></div>`; }).join('') || '<p class="mut">Sin datos</p>';
+  const porIdx = [...lista].sort((a, b) => (b.I.idx ?? -1) - (a.I.idx ?? -1));
+  $('#gEf').innerHTML = porIdx.map(({ u, I }) => { const c = I.idx >= 80 ? '#3c9a5f' : I.idx >= 60 ? '#d4a72c' : '#d9534f';
+    return `<div class="bar"><span class="nm" title="${esc(u)}">${esc(u.replace(/^\d+\s+/, ''))}</span><div class="tr"><div style="width:${I.idx || 0}%;background:${c}"></div></div><span class="vl">${I.idx ?? '—'}</span></div>`; }).join('') || '<p class="mut">Sin datos</p>';
+  $('#tbEf').innerHTML = porIdx.map(({ u, I }) => `<tr><td>${esc(u)}</td><td>${I.n}</td><td>${fpct(I.gest)}</td><td><span class="sem ${semc(I.oport)}">${fpct(I.oport)}</span></td><td>${I.dG}</td>
+    <td><span class="sem ${semc(I.cont)}">${fpct(I.cont)}</span></td><td><span class="sem ${semc(I.ent)}">${fpct(I.ent)}</span></td><td>${fpct(I.evi)}</td>
+    <td><span class="sem ${semc(I.idx)}">${I.idx ?? '—'}</span></td><td><button class="sec min" data-fb="${esc(u)}">Ficha</button></td></tr>`).join('');
+  $$('[data-fb]').forEach(b => b.onclick = () => ficha(b.dataset.fb));
+  $('#tbRet').innerHTML = porIdx.filter(({ I }) => I.sinGFuera.length || I.gFuera.length || I.sinC || I.locSinE)
+    .map(({ u, I }) => `<tr><td>${esc(u)}</td><td><b style="color:${I.sinGFuera.length ? '#c0392b' : 'inherit'}">${I.sinGFuera.length}</b></td><td>${I.gFuera.length}</td><td>${esc(I.resp.join(', ') || '—')}</td><td>${I.sinC}</td><td>${I.locSinE}</td></tr>`).join('')
+    || '<tr><td colspan="6" class="mut">Sin rezagos con la meta actual.</td></tr>';
+}
+function ficha(u) {
+  const meta = parseInt($('#kMeta').value) || 2, rs = DATA.filter(r => r.unidad === u), I = indicadores(rs, meta);
+  const fila = r => `<tr><td>${esc(r.folio)}</td><td>${esc(r.clave)}</td><td>${esc(String(r.descripcion).slice(0, 60))}</td><td>${esc(r.piezas)}</td><td>${diasDesde(r.fechaAlta || r.fechaCarga) ?? ''}</td><td>${chip(estatusMonitor(r))}</td><td>${esc(r.g_accion || '—')}</td><td>${esc(r.c_resultado || '—')}</td><td>${esc(r.e_fechaEntrega || '—')}</td></tr>`;
+  const pend = rs.filter(r => estatusMonitor(r) !== 'FINALIZADA').sort((a, b) => dias(b) - dias(a));
+  $('#mbox').innerHTML = `<div class="row" style="align-items:center"><h2 style="margin:0;color:var(--v);flex:3">Ficha de retroalimentación · ${esc(u)}</h2>
+    <button class="sec" style="flex:0 0 auto" onclick="window.print()">Imprimir</button><button class="sec" style="flex:0 0 auto" id="mX">Cerrar</button></div>
+    <p class="mut">Corte: ${ahora()} · Meta de gestión: ${meta} días desde que la receta se cargó al Monitor.</p>
+    <div class="kpis">${[['Índice de eficiencia', I.idx], ['Gestión oportuna (Administrador)', I.oport], ['Contacto efectivo (TAOD)', I.cont], ['Entregadas (Farmacia)', I.ent], ['Entregas con evidencia', I.evi]]
+      .map(([l, v]) => `<div class="kpi"><b><span class="sem ${semc(v)}">${v ?? '—'}${l.startsWith('Índice') || v == null ? '' : '%'}</span></b><span>${l}</span></div>`).join('')}</div>
+    <p><b>Puntos a atender:</b></p><ul>
+      ${I.sinGFuera.length ? `<li>${I.sinGFuera.length} renglones sin gestión con más de ${meta} días: el Administrador debe registrar cómo se obtendrá el medicamento.</li>` : ''}
+      ${I.gFuera.length ? `<li>${I.gFuera.length} gestiones capturadas fuera de meta (${esc(I.resp.join(', '))}).</li>` : ''}
+      ${I.sinC ? `<li>${I.sinC} pacientes sin contacto efectivo: la TAOD debe localizarlos y orientarlos.</li>` : ''}
+      ${I.locSinE ? `<li>${I.locSinE} pacientes localizados que aún no reciben su medicamento.</li>` : ''}
+      ${I.ent != null && I.evi != null && I.evi < 100 ? `<li>${100 - I.evi}% de las entregas no tiene evidencia.</li>` : ''}
+    </ul>
+    <h3 class="ct">Renglones pendientes (${pend.length})</h3>
+    <div class="tw"><table><thead><tr><th>Folio</th><th>Clave</th><th>Medicamento</th><th>Pzas</th><th>Días en Monitor</th><th>Estatus</th><th>Gestión</th><th>Contacto</th><th>Entrega</th></tr></thead><tbody>${pend.map(fila).join('') || '<tr><td colspan="9" class="mut">Sin pendientes</td></tr>'}</tbody></table></div>`;
+  $('#modal').classList.remove('hide'); document.body.classList.add('fm'); $('#mX').onclick = cerrar;
+}
+function descargarBD() {
+  const tit = { id: 'Id', ooad: 'OOAD', fechaRegistro: 'Fecha registro RC', diasRegistro: 'Días desde registro (al cargar)', paciente: 'Paciente', curp: 'CURP', telefono: 'Teléfono', telefono2: 'Otro teléfono',
+    correo: 'Correo', dependencia: 'Dependencia', unidad: 'Unidad médica', folio: 'Folio receta', fechaExpedicion: 'Fecha expedición', tipoReceta: 'Manual/Digital', clave: 'Clave', descripcion: 'Descripción',
+    piezas: 'Piezas', estatusRC: 'Estatus RC (al cargar)', estatusRecetaRC: 'Estatus receta RC', accionCAE: 'Acción sugerida CAE', fechaCarga: 'Última carga', fechaAlta: 'Primera carga',
+    g_accion: 'GESTIÓN: cómo se obtiene', g_fechaDisponible: 'GESTIÓN: fecha estimada', g_obs: 'GESTIÓN: observaciones', g_resp: 'GESTIÓN: capturó', g_reg: 'GESTIÓN: fecha captura',
+    c_fecha: 'CONTACTO: fecha', c_medio: 'CONTACTO: medio', c_resultado: 'CONTACTO: resultado', c_fechaCita: 'CONTACTO: fecha acordada', c_obs: 'CONTACTO: observaciones', c_resp: 'CONTACTO: capturó', c_reg: 'CONTACTO: fecha captura',
+    e_fechaResguardo: 'ENTREGA: fecha resguardo', e_fechaEntrega: 'ENTREGA: fecha entrega', e_piezas: 'ENTREGA: piezas', e_receptor: 'ENTREGA: recibió', e_evidencia: 'ENTREGA: evidencia', e_obs: 'ENTREGA: observaciones', e_resp: 'ENTREGA: capturó', e_reg: 'ENTREGA: fecha captura',
+    p_estatus: 'PLATAFORMA: estatus actualizado', p_fecha: 'PLATAFORMA: fecha', p_resp: 'PLATAFORMA: actualizó' };
+  const cols = FIELDS.filter(f => f !== 'id');
+  const data = DATA.map(r => [...cols.map(f => f === 'e_evidencia' && String(r[f] || '').startsWith('data:') ? 'Sí (en Monitor)' : r[f] ?? ''), estatusMonitor(r), pendPlataforma(r) ? 'SÍ' : 'NO']);
+  const head = [...cols.map(f => tit[f] || f), 'ESTATUS MONITOR', 'PENDIENTE EN PLATAFORMA'];
+  const wb = XLSX.utils.book_new(), ws = XLSX.utils.aoa_to_sheet([head, ...data]); ws['!autofilter'] = { ref: XLSX.utils.encode_range({ s: { r: 0, c: 0 }, e: { r: data.length, c: head.length - 1 } }) };
+  XLSX.utils.book_append_sheet(wb, ws, 'Base');
+  const meta = parseInt($('#kMeta').value) || 2, U = porUnidad();
+  const ind = [['Unidad', 'Renglones', '% gestión capturada', '% gestión oportuna', 'Días prom. a gestión', '% contacto efectivo', '% entregadas', '% con evidencia', 'Índice de eficiencia', 'Sin gestión fuera de meta', 'Gestionados fuera de meta', 'Capturó gestión fuera de meta']];
+  Object.entries(U).forEach(([u, rs]) => { const I = indicadores(rs, meta); ind.push([u, I.n, I.gest, I.oport, I.dG, I.cont, I.ent, I.evi, I.idx, I.sinGFuera.length, I.gFuera.length, I.resp.join(', ')]); });
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(ind), 'Indicadores');
+  XLSX.writeFile(wb, 'MonitorCAE_base_' + hoy() + '.xlsx');
+}
+
+/* ---------------- exportar para plataforma ---------------- */
+function exportar() {
+  const rs = filtrar(visibles()).filter(pendPlataforma);
+  if (!rs.length) return toast('No hay renglones pendientes de actualizar en plataforma con estos filtros');
+  const head = ['Unidad médica', 'Folio o Número Receta', 'Clave medicamento', 'Descripción', 'Piezas', 'Nombre paciente', 'Estatus en plataforma', 'NUEVO ESTATUS',
+    'Gestión', 'Fecha estimada', 'Contacto', 'Fecha contacto', 'Fecha resguardo', 'Fecha entrega', 'Piezas entregadas', 'Recibió', 'Evidencia', 'Observaciones'];
+  const data = rs.map(r => [r.unidad, r.folio, r.clave, r.descripcion, r.piezas, r.paciente, enPlataforma(r), estatusMonitor(r), r.g_accion, r.g_fechaDisponible,
+    r.c_resultado, r.c_fecha, r.e_fechaResguardo, r.e_fechaEntrega, r.e_piezas, r.e_receptor, String(r.e_evidencia || '').startsWith('data:') ? 'Sí (en Monitor)' : r.e_evidencia,
+    [r.g_obs, r.c_obs, r.e_obs].filter(Boolean).join(' | ')]);
+  const nom = 'MonitorCAE_actualizar_plataforma_' + hoy();
+  if (window.XLSX) { const ws = XLSX.utils.aoa_to_sheet([head, ...data]); ws['!cols'] = head.map((h, i) => ({ wch: [24, 16, 16, 40, 7, 28, 14, 14, 30, 11, 30, 11, 11, 11, 8, 20, 20, 40][i] }));
+    const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'Actualizar'); XLSX.writeFile(wb, nom + '.xlsx'); }
+  else { const csv = [head, ...data].map(r => r.map(v => `"${String(v ?? '').replace(/"/g, '""')}"`).join(',')).join('\r\n');
+    const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob(['﻿' + csv], { type: 'text/csv' })); a.download = nom + '.csv'; a.click(); }
+  toast(`Exportados ${rs.length} renglones. Después de cambiarlos en la plataforma, márcalos como actualizados.`, 6000);
+}
+
+/* ---------------- importar RC ---------------- */
+const MAPA = { ooad: ['ooad'], fechaRegistro: ['fechaderegistro'], diasRegistro: ['diasdesdeelregistro'], paciente: ['nombrepaciente'], curp: ['curpdelpaciente', 'curp'],
+  telefono: ['telefonocelular'], telefono2: ['otrotelefono'], correo: ['correoelectronico'], dependencia: ['dependencia'], unidad: ['unidadmedica'],
+  folio: ['folioonumeroreceta', 'folioreceta'], fechaExpedicion: ['fechadeexpediciondelareceta'], tipoReceta: ['recetaesmanualodigital'],
+  clave: ['clavemedicamento'], descripcion: ['descripconmedicamento', 'descripcionmedicamento'], piezas: ['piezas'], estatusRC: ['estatusactual'],
+  estatusRecetaRC: ['estatusreceta'], accionCAE: ['acciones'] };
+function leerArchivo(file) {
+  return new Promise((ok, ko) => { const fr = new FileReader();
+    fr.onload = () => { try {
+      let rows;
+      if (/\.csv$/i.test(file.name) && !window.XLSX) { rows = parseCSV(new TextDecoder().decode(fr.result)); }
+      else { const wb = XLSX.read(fr.result, { type: 'array', cellDates: false });
+        const sn = wb.SheetNames.find(n => /^RC /i.test(n)) || wb.SheetNames.find(n => /hoja 1/i.test(n)) || wb.SheetNames.find(n => !/an[aá]lisis/i.test(n)) || wb.SheetNames[0];
+        rows = XLSX.utils.sheet_to_json(wb.Sheets[sn], { header: 1, raw: true, defval: '' }); }
+      ok(rows); } catch (e) { ko(e); } };
+    fr.onerror = ko; fr.readAsArrayBuffer(file); });
+}
+function parseCSV(t) { const out = []; let row = [], v = '', q = false;
+  for (let i = 0; i < t.length; i++) { const c = t[i];
+    if (q) { if (c === '"' && t[i + 1] === '"') { v += '"'; i++; } else if (c === '"') q = false; else v += c; }
+    else if (c === '"') q = true; else if (c === ',') { row.push(v); v = ''; } else if (c === '\n') { row.push(v); out.push(row); row = []; v = ''; } else if (c !== '\r') v += c; }
+  if (v || row.length) { row.push(v); out.push(row); } return out; }
+function convertir(rows) {
+  const hi = rows.findIndex(r => r.some(c => norm(c) === 'clavemedicamento'));
+  if (hi < 0) throw new Error('No encontré la columna "Clave medicamento". ¿Es un reporte RC?');
+  const h = rows[hi].map(norm), ix = {};
+  for (const [k, al] of Object.entries(MAPA)) { const j = h.findIndex(x => al.includes(x)); if (j >= 0) ix[k] = j; }
+  if (ix.folio == null || ix.unidad == null) throw new Error('Faltan columnas de Folio o Unidad médica');
+  const fc = hoy(), out = {}, vistos = {};
+  for (const r of rows.slice(hi + 1)) {
+    const folio = String(r[ix.folio] ?? '').trim(), clave = String(r[ix.clave] ?? '').trim(); if (!folio || !clave) continue;
+    const o = {}; FIELDS.forEach(f => o[f] = '');
+    for (const k of Object.keys(ix)) o[k] = r[ix[k]] ?? '';
+    o.fechaRegistro = fmtFecha(o.fechaRegistro); o.fechaExpedicion = fmtFecha(o.fechaExpedicion);
+    o.estatusRC = String(o.estatusRC || 'REGISTRADA').trim().toUpperCase(); o.folio = folio; o.clave = clave;
+    o.fechaCarga = fc; o.fechaAlta = fc; o.diasRegistro = String(o.diasRegistro);
+    let id = folio + '|' + clave; vistos[id] = (vistos[id] || 0) + 1; if (vistos[id] > 1) id += '|' + vistos[id];
+    o.id = id; out[id] = o;
+  }
+  return Object.values(out);
+}
+
+/* ---------------- demo ---------------- */
+function demo() {
+  const U = ['310101 UMF 1 Mérida', '310201 HGZ 1 Mérida', '310301 UMF 59 Mérida', '311201 HGSZ 13 Valladolid', '310801 UMF 46 Umán'];
+  const M = [['010 000 2540 00 00', 'Metformina, tableta 850 mg, envase con 30'], ['010 000 0574 00 00', 'Captopril, tableta 25 mg, envase con 30'],
+    ['010 000 1050 00 00', 'Insulina humana NPH, suspensión 100 UI/ml'], ['010 000 5106 00 00', 'Atorvastatina, tableta 20 mg, envase con 10'],
+    ['010 000 0104 00 00', 'Paracetamol, tableta 500 mg, envase con 10'], ['010 000 4158 00 00', 'Losartán, gragea 50 mg, envase con 30']];
+  const N = ['MARÍA PÉREZ CANUL', 'JOSÉ CHAN POOT', 'ROSA MAY KU', 'LUIS DZIB PECH', 'ANA UC BALAM', 'PEDRO EK CHI', 'CARMEN TUN COHUO', 'JORGE NAH CAAMAL'];
+  const A = ['LA UNIDAD CUENTA CON EXISTENCIA', 'SE GENERA ORDEN (COORDINARSE CON SUMINISTRO)', 'COMPRA EMERGENTE', 'TRASPASO CON UMF 1 Mérida (existencia 120, consumo mensual 60)'];
+  const regs = [];
+  for (let i = 0; i < 40; i++) { const m = M[i % M.length], o = {}; FIELDS.forEach(f => o[f] = '');
+    Object.assign(o, { ooad: 'YUCATÁN', unidad: U[i % U.length], folio: String(900000 + Math.floor(i / 2)), clave: m[0], descripcion: m[1], piezas: String(1 + i % 3),
+      paciente: N[i % N.length] + ' (EJEMPLO)', curp: 'XXXX000000XXXXXX0' + i % 10, telefono: '9990000' + String(100 + i), fechaRegistro: '2026-10-' + String(10 + i % 20),
+      diasRegistro: String(2 + i % 15), tipoReceta: i % 4 ? 'DIGITAL' : 'MANUAL', estatusRC: 'REGISTRADA', accionCAE: A[i % A.length], fechaCarga: hoy(), fechaAlta: hoy() });
+    o.id = o.folio + '|' + o.clave; regs.push(o); }
+  return regs;
+}
+
+/* ---------------- tabs / eventos ---------------- */
+function tab(t) { $$('#tabs button').forEach(b => b.classList.toggle('on', b.dataset.t === t));
+  ['lista', 'caratula', 'resumen', 'carga', 'config'].forEach(x => $('#t' + x[0].toUpperCase() + x.slice(1)).classList.toggle('hide', x !== t));
+  if (t === 'resumen') resumen(); if (t === 'caratula') caratula(); if (t === 'config') pintarCfg(); }
+function pintarCfg() { $('#cGas').classList.toggle('hide', !GAS); $('#cLocal').classList.toggle('hide', !!GAS); $('#cMode').value = CFG.mode; $('#cSite').value = CFG.spSite; $('#cList').value = CFG.spList; $('#cGUrl').value = CFG.gUrl; $('#cGKey').value = CFG.gKey;
+  $('#cSP').classList.toggle('hide', CFG.mode !== 'sharepoint'); $('#cGG').classList.toggle('hide', CFG.mode !== 'google'); }
+
+$('#lPerfil').onchange = () => { const c = $('#lPerfil').value === 'CAE'; $('#lUniBox').classList.toggle('hide', c); $('#lPinBox').classList.toggle('hide', !c); };
+$('#lEntrar').onclick = entrar;
+$('#btnOut').textContent = 'Salir';
+$('#btnOut').onclick = () => { LS.set('user', null); MonitorCAE.salir(); };
+$('#btnRef').onclick = cargar;
+$$('#tabs button').forEach(b => b.onclick = () => tab(b.dataset.t));
+['#fUnidad', '#fEst', '#fVer'].forEach(s => $(s).onchange = render);
+$('#fTxt').oninput = () => { clearTimeout(window._ft); window._ft = setTimeout(render, 250); };
+$('#btnExp').onclick = exportar;
+$('#btnBD').onclick = descargarBD;
+$('#btnBD2').onclick = descargarBD;
+$('#kMeta').oninput = caratula;
+$('#modal').onclick = e => { if (e.target.id === 'modal') cerrar(); };
+document.addEventListener('keydown', e => { if (e.key === 'Escape') cerrar(); });
+$('#cMode').onchange = () => { $('#cSP').classList.toggle('hide', $('#cMode').value !== 'sharepoint'); $('#cGG').classList.toggle('hide', $('#cMode').value !== 'google'); };
+$('#btnSaveCfg').onclick = () => { CFG = { mode: $('#cMode').value, spSite: $('#cSite').value.trim(), spList: $('#cList').value.trim() || 'MonitorCAE', gUrl: $('#cGUrl').value.trim(), gKey: $('#cGKey').value.trim() };
+  LS.set('cfg', CFG); conectar(); cargar(); toast('Conectado a ' + DB.name); };
+$('#btnSetup').onclick = async () => { const b = $('#btnSetup'); b.disabled = true; b.textContent = 'Creando…';
+  try { SharePointDB.site = $('#cSite').value.trim(); SharePointDB.list = $('#cList').value.trim() || 'MonitorCAE'; const n = await SharePointDB.setup(); toast(`Lista lista. Columnas creadas: ${n}`, 5000); }
+  catch (e) { toast('No se pudo crear: ' + e.message, 8000); } finally { b.disabled = false; b.textContent = 'Crear lista y columnas en SharePoint'; } };
+$('#fileRC').onchange = async e => { const f = e.target.files[0]; if (!f) return; $('#prev').textContent = 'Leyendo…'; $('#btnImp').disabled = true;
+  try { const regs = convertir(await leerArchivo(f)), act = regs.filter(r => r.estatusRC !== 'FINALIZADA');
+    const cnt = {}; regs.forEach(r => cnt[r.estatusRC] = (cnt[r.estatusRC] || 0) + 1);
+    PREV = act; $('#prev').innerHTML = `<b>${regs.length}</b> renglones leídos (${Object.entries(cnt).map(([k, v]) => k + ': ' + v).join(', ')}). Se subirán <b>${act.length}</b> no finalizados de <b>${new Set(act.map(r => r.unidad)).size}</b> unidades.${act.some(r => r.accionCAE) ? ' Incluye acción sugerida por CAE.' : ''}`;
+    $('#btnImp').disabled = !act.length; }
+  catch (err) { $('#prev').textContent = 'Error: ' + err.message; } };
+$('#btnImp').onclick = async () => { const b = $('#btnImp'); b.disabled = true; b.textContent = 'Subiendo…';
+  try { const x = await DB.upsertMany(PREV); toast(`Listo: ${x.nuevos} nuevos, ${x.actualizados} actualizados`, 5000); PREV = null; $('#prev').textContent = ''; $('#fileRC').value = ''; await cargar(); tab('lista'); }
+  catch (e) { toast('Error al subir: ' + e.message, 8000); } finally { b.textContent = 'Subir a la base de datos'; } };
+$('#btnDemo').onclick = async () => { const b = $('#btnDemo'); b.disabled = true; try { await DB.upsertMany(demo()); await cargar(); toast('Datos de ejemplo generados'); } catch (e) { toast('Error: ' + e.message, 6000); } finally { b.disabled = false; } };
+$('#btnBorrar').onclick = async () => { const pin = prompt('Esto borra TODOS los renglones y lo capturado. Escribe el PIN de CAE para confirmar:'); if (pin == null) return;
+  try { if (GAS) await AppsDB.clear(pin); else DemoDB.clear(); await cargar(); toast('Base vacía'); } catch (e) { toast('No se borró: ' + e.message, 6000); } };
+if ($('#btnHoja')) $('#btnHoja').onclick = async () => { try { const i = await gs('apiInfo'); window.open(i.url, '_blank'); } catch (e) { toast(e.message); } };
+
+/* ---------------- inicio ---------------- */
+conectar();
+$('#lHint').textContent = GAS ? 'Perfil CAE: requiere PIN.' : CFG.mode === 'demo' ? 'Modo DEMO: los datos solo viven en este navegador. Entra como CAE → Cargar RC para empezar.' : '';
+// Perfil decidido por el servidor según la clave de acceso (conexion.js)
+document.addEventListener('mcae-perfil', async ev => {
+  const p = ev.detail, M = { Administrador: 'ADM', ADM: 'ADM', TAOD: 'TAOD', Farmacia: 'FAR', FAR: 'FAR', CAE: 'CAE' };
+  const rol = M[p.rol] || p.rol;
+  USER = rol === 'CAE' ? { rol: 'CAE', nombre: p.nombre || 'Coordinación de Abasto' } : { rol, unidad: p.unidad, nombre: p.nombre || ROL[rol] || rol };
+  LS.set('user', USER);
+  await cargar();
+  if (rol !== 'CAE' && DATA.length) USER.unidad = DATA[0].unidad; // misma escritura que en la hoja RC
+  abrirApp();
+});
+</script>
+</body>
+</html>
