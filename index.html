@@ -59,7 +59,7 @@ td{border-bottom:1px solid var(--ln);padding:6px;vertical-align:top}tr.it:hover 
 </head>
 <body>
 <header>
-  <div><h1>Monitor CAE · Receta Completa</h1><div class="sub">Coordinación de Abasto y Equipamiento – OOAD Yucatán</div></div>
+  <div><h1>Monitor CAE · Receta Completa</h1><div class="sub">Coordinación de Abastecimiento y Equipamiento – OOAD Yucatán</div></div>
   <div class="sp"></div>
   <span class="badge" id="bMode"></span>
   <span class="badge" id="bUser"></span>
@@ -68,28 +68,7 @@ td{border-bottom:1px solid var(--ln);padding:6px;vertical-align:top}tr.it:hover 
 </header>
 
 <main>
-<!-- ============ PERFIL ============ -->
-<section id="vLogin" class="card login">
-  <h2 style="margin-top:0;color:var(--v)">¿Quién captura?</h2>
-  <label>Perfil</label>
-  <select id="lPerfil">
-    <option value="UNIDAD">Unidad médica</option>
-    <option value="CAE">Coordinación de Abasto (CAE)</option>
-  </select>
-  <div id="lUniBox">
-    <label>Unidad médica</label><select id="lUnidad"></select>
-    <label>Rol</label>
-    <select id="lRol">
-      <option value="ADM">Administrador(a) – Gestión del medicamento</option>
-      <option value="TAOD">TAOD – Contacto y seguimiento al paciente</option>
-      <option value="FAR">Coordinador(a) de Farmacia – Resguardo y entrega</option>
-    </select>
-  </div>
-  <div id="lPinBox" class="hide"><label>PIN de Coordinación de Abasto</label><input id="lPin" type="password" inputmode="numeric"></div>
-  <label>Nombre de quien captura</label><input id="lNombre" placeholder="Nombre y apellido">
-  <div class="row" style="margin-top:14px"><button id="lEntrar">Entrar</button></div>
-  <p class="mut" id="lHint"></p>
-</section>
+<section id="vLogin" class="card login"><p class="mut" style="text-align:center;margin:0">Cargando…</p></section>
 
 <!-- ============ APP ============ -->
 <section id="vApp" class="hide">
@@ -227,7 +206,7 @@ const OPC = {
   c_resultado: ['Localizado – acudirá por el medicamento','Localizado – cita programada para entrega','No contesta / no localizado (reintentar)',
     'Número incorrecto o sin datos de contacto','Paciente ya adquirió o recibió el medicamento','Paciente ya no lo requiere / rechaza','Otro (ver observaciones)']
 };
-const ROL = { ADM: 'Administrador(a)', TAOD: 'TAOD', FAR: 'Coord. de Farmacia', CAE: 'Coordinación de Abasto' };
+const ROL = { ADM: 'Administrador(a)', TAOD: 'TAOD', FAR: 'Coord. de Farmacia', CAE: 'Coordinación de Abastecimiento y Equipamiento' };
 const RANK = { 'REGISTRADA': 0, 'EN GESTIÓN': 1, 'EN GESTION': 1, 'EN SITIO': 2, 'FINALIZADA': 3 };
 const EST = ['REGISTRADA', 'EN GESTIÓN', 'EN SITIO', 'FINALIZADA'];
 
@@ -438,20 +417,7 @@ async function cargar() {
 /* ---------------- perfil ---------------- */
 function llenarUnidades() {
   const us = [...new Set(DATA.map(r => r.unidad).filter(Boolean))].sort();
-  const sel = $('#lUnidad'), v = sel.value || USER?.unidad;
-  sel.innerHTML = us.length ? us.map(u => `<option>${esc(u)}</option>`).join('') : '<option value="">(aún no hay recetas cargadas)</option>';
-  if (v && us.includes(v)) sel.value = v;
   const f = $('#fUnidad'), fv = f.value; f.innerHTML = '<option value="">Todas</option>' + us.map(u => `<option>${esc(u)}</option>`).join(''); if (us.includes(fv)) f.value = fv;
-}
-function mostrarLogin() { $('#vLogin').classList.remove('hide'); $('#vApp').classList.add('hide'); $('#lUniBox').classList.toggle('hide', $('#lPerfil').value === 'CAE');
-  if (USER) { $('#lPerfil').value = USER.rol === 'CAE' ? 'CAE' : 'UNIDAD'; $('#lNombre').value = USER.nombre || ''; if (USER.rol !== 'CAE') $('#lRol').value = USER.rol; $('#lUniBox').classList.toggle('hide', USER.rol === 'CAE'); } $('#lPinBox').classList.toggle('hide', $('#lPerfil').value !== 'CAE'); $('#lPin').value = ''; }
-async function entrar() {
-  const p = $('#lPerfil').value, n = $('#lNombre').value.trim();
-  if (p === 'CAE' && GAS) { let ok = false; try { ok = await gs('apiPin', $('#lPin').value); } catch (e) { } if (!ok) return toast('PIN incorrecto'); }
-  if (!n) return toast('Escribe tu nombre');
-  if (p === 'UNIDAD' && !$('#lUnidad').value) return toast('Selecciona la unidad médica');
-  USER = p === 'CAE' ? { rol: 'CAE', nombre: n } : { rol: $('#lRol').value, unidad: $('#lUnidad').value, nombre: n };
-  LS.set('user', USER); abrirApp();
 }
 function abrirApp() {
   $('#vLogin').classList.add('hide'); $('#vApp').classList.remove('hide');
@@ -773,8 +739,6 @@ function tab(t) { $$('#tabs button').forEach(b => b.classList.toggle('on', b.dat
 function pintarCfg() { $('#cGas').classList.toggle('hide', !GAS); $('#cLocal').classList.toggle('hide', !!GAS); $('#cMode').value = CFG.mode; $('#cSite').value = CFG.spSite; $('#cList').value = CFG.spList; $('#cGUrl').value = CFG.gUrl; $('#cGKey').value = CFG.gKey;
   $('#cSP').classList.toggle('hide', CFG.mode !== 'sharepoint'); $('#cGG').classList.toggle('hide', CFG.mode !== 'google'); }
 
-$('#lPerfil').onchange = () => { const c = $('#lPerfil').value === 'CAE'; $('#lUniBox').classList.toggle('hide', c); $('#lPinBox').classList.toggle('hide', !c); };
-$('#lEntrar').onclick = entrar;
 $('#btnOut').textContent = 'Salir';
 $('#btnOut').onclick = () => { LS.set('user', null); MonitorCAE.salir(); };
 $('#btnRef').onclick = cargar;
@@ -822,12 +786,11 @@ if ($('#btnHoja')) $('#btnHoja').onclick = async () => { try { const i = await g
 
 /* ---------------- inicio ---------------- */
 conectar();
-$('#lHint').textContent = GAS ? 'Perfil CAE: requiere PIN.' : CFG.mode === 'demo' ? 'Modo DEMO: los datos solo viven en este navegador. Entra como CAE → Cargar RC para empezar.' : '';
 // Perfil decidido por el servidor según la clave de acceso (conexion.js)
 document.addEventListener('mcae-perfil', async ev => {
   const p = ev.detail, M = { Administrador: 'ADM', ADM: 'ADM', TAOD: 'TAOD', Farmacia: 'FAR', FAR: 'FAR', CAE: 'CAE' };
   const rol = M[p.rol] || p.rol;
-  USER = rol === 'CAE' ? { rol: 'CAE', nombre: p.nombre || 'Coordinación de Abasto' } : { rol, unidad: p.unidad, nombre: p.nombre || ROL[rol] || rol };
+  USER = rol === 'CAE' ? { rol: 'CAE', nombre: (p.nombre && p.nombre !== 'Coordinación de Abasto') ? p.nombre : ROL.CAE } : { rol, unidad: p.unidad, nombre: p.nombre || ROL[rol] || rol };
   LS.set('user', USER);
   await cargar();
   if (rol !== 'CAE' && DATA.length) USER.unidad = DATA[0].unidad; // misma escritura que en la hoja RC
