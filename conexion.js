@@ -55,7 +55,7 @@
       '<div style="position:fixed;inset:0;background:#0B5345;display:flex;align-items:center;justify-content:center;z-index:99999;font-family:system-ui,sans-serif">' +
       '<form style="background:#fff;padding:28px 32px;border-radius:12px;width:min(340px,90vw);box-shadow:0 10px 30px rgba(0,0,0,.25)">' +
       '<h2 style="margin:0 0 4px;color:#0B5345">Monitor CAE</h2>' +
-      '<p style="margin:0 0 18px;color:#555;font-size:14px">Receta Completa · OOAD Yucatán</p>' +
+      '<p style="margin:0 0 18px;color:#555;font-size:14px">Receta Completa<br>Coordinación de Abastecimiento y Equipamiento – OOAD Yucatán</p>' +
       '<label style="font-size:13px;color:#333">Clave de acceso</label>' +
       '<input id="mcae-clave" type="password" autocomplete="current-password" required style="width:100%;box-sizing:border-box;padding:10px;margin:6px 0 12px;border:1px solid #bbb;border-radius:8px;font-size:15px">' +
       '<div id="mcae-msg" style="color:#b00020;font-size:13px;min-height:18px;margin-bottom:8px">' + (msg || '') + '</div>' +
