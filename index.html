@@ -104,7 +104,7 @@ td{border-bottom:1px solid var(--ln);padding:6px;vertical-align:top}tr.it:hover 
       <div style="flex:0 0 auto"><label>Meta de gestión (días)</label><input id="kMeta" type="number" min="1" value="2" style="width:80px"></div>
       <div style="flex:0 0 auto"><button class="sec" id="btnBD2">⬇ Base completa (Excel)</button></div></div>
       <div class="kpis" id="kGlobal" style="margin-top:12px"></div></div>
-a    <div class="grid2">
+    <div class="grid2">
       <div class="card"><h3 class="ct">Cumplimiento por unidad (estatus de cada renglón)</h3><div id="gEst"></div>
         <div class="leg"><span class="FINALIZADA"></span>Finalizada <span class="EN_SITIO"></span>En sitio <span class="EN_GESTION"></span>En gestión <span class="REGISTRADA"></span>Registrada</div></div>
       <div class="card"><div class="row" style="align-items:center"><h3 class="ct" style="flex:3;margin:0">Días de retraso · pacientes pendientes</h3>
@@ -118,7 +118,7 @@ a    <div class="grid2">
 
   <div id="tResumen" class="hide">
     <div class="card"><h3 style="margin-top:0;color:var(--v)">Avance por unidad médica</h3>
-a    <div class="tw"><table><thead><tr><th>Unidad</th><th>Total</th><th>% avance</th><th>FINALIZADA</th><th>EN SITIO</th><th>EN GESTIÓN</th><th>REGISTRADA</th><th>Folios</th><th>Sin gestión (Admin)</th><th>Sin contacto (TAOD)</th><th>Sin entrega (Farmacia)</th><th>Por actualizar en plataforma</th></tr></thead><tbody id="tbRes"></tbody></table></div>
+    <div class="tw"><table><thead><tr><th>Unidad</th><th>Total</th><th>% avance</th><th>FINALIZADA</th><th>EN SITIO</th><th>EN GESTIÓN</th><th>REGISTRADA</th><th>Folios</th><th>Sin gestión (Admin)</th><th>Sin contacto (TAOD)</th><th>Sin entrega (Farmacia)</th><th>Por actualizar en plataforma</th></tr></thead><tbody id="tbRes"></tbody></table></div>
     <p class="mut">% avance = finalizadas ÷ total de renglones. Verde ≥ 80 %, amarillo 60–79 %, rojo &lt; 60 %.</p></div>
   </div>
 
@@ -445,7 +445,7 @@ function render() {
   const base = visibles(), rs = filtrar(base).sort((a, b) => dias(b) - dias(a));
   const cnt = k => base.filter(r => estatusMonitor(r) === k).length;
   const mio = base.filter(r => pendRol(r, USER.rol)).length;
-a  $('#kpis').innerHTML = [
+  $('#kpis').innerHTML = [
     ['', base.length, 'Total de renglones (folio + clave)', ''],
     ['fin', cnt('FINALIZADA'), 'FINALIZADA (entregada)', 'FINALIZADA'], ['sit', cnt('EN SITIO'), 'EN SITIO (en farmacia)', 'EN SITIO'],
     ['ges', cnt('EN GESTIÓN'), 'EN GESTIÓN', 'EN GESTIÓN'], ['reg', cnt('REGISTRADA'), 'REGISTRADA', 'REGISTRADA'],
@@ -562,7 +562,7 @@ function resumen() {
   for (const r of DATA) { const u = r.unidad || '(sin unidad)'; (g[u] = g[u] || []).push(r); }
   const rows = Object.entries(g).sort((a, b) => b[1].length - a[1].length).map(([u, rs]) => {
     const c = k => rs.filter(r => estatusMonitor(r) === k).length, fin = c('FINALIZADA');
-a    const p = rs.length ? Math.round(fin / rs.length * 100) : 0;
+    const p = rs.length ? Math.round(fin / rs.length * 100) : 0;
     return `<tr><td>${esc(u)}</td><td><b>${rs.length}</b></td><td><span class="sem ${semc(p)}">${p}%</span></td><td><b style="color:#1e6b36">${fin}</b></td><td>${c('EN SITIO')}</td><td>${c('EN GESTIÓN')}</td><td>${c('REGISTRADA')}</td><td>${new Set(rs.map(r => r.folio)).size}</td>
       <td>${rs.filter(r => pendRol(r, 'ADM')).length}</td><td>${rs.filter(r => pendRol(r, 'TAOD')).length}</td><td>${rs.filter(r => pendRol(r, 'FAR')).length}</td>
       <td>${rs.filter(pendPlataforma).length}</td></tr>`; });
@@ -591,7 +591,7 @@ function indicadores(rs, meta) {
     locSinE: rs.filter(r => /^Localizado/i.test(r.c_resultado || '') && !r.e_fechaEntrega).length };
 }
 function porUnidad() { const g = {}; for (const r of DATA) { const u = r.unidad || '(sin unidad)'; (g[u] = g[u] || []).push(r); } return g; }
-afunction caratula() {
+function caratula() {
   const meta = parseInt($('#kMeta').value) || 2, U = porUnidad(), cnt = k => DATA.filter(r => estatusMonitor(r) === k).length;
   const pend = DATA.filter(r => estatusMonitor(r) !== 'FINALIZADA');
   const pac = rs => { const m = {}; rs.forEach(r => { const k = r.curp || r.paciente || r.folio, d = dias(r); if (m[k] == null || d > m[k]) m[k] = d; }); return Object.values(m); };
