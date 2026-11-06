@@ -104,14 +104,13 @@ td{border-bottom:1px solid var(--ln);padding:6px;vertical-align:top}tr.it:hover 
       <div style="flex:0 0 auto"><label>Meta de gestión (días)</label><input id="kMeta" type="number" min="1" value="2" style="width:80px"></div>
       <div style="flex:0 0 auto"><button class="sec" id="btnBD2">⬇ Base completa (Excel)</button></div></div>
       <div class="kpis" id="kGlobal" style="margin-top:12px"></div></div>
-    <div class="grid2">
+a    <div class="grid2">
       <div class="card"><h3 class="ct">Cumplimiento por unidad (estatus de cada renglón)</h3><div id="gEst"></div>
-        <div class="leg"><span class="REGISTRADA"></span>Registrada <span class="EN_GESTION"></span>En gestión <span class="EN_SITIO"></span>En sitio <span class="FINALIZADA"></span>Finalizada</div></div>
-      <div class="card"><h3 class="ct">Índice de eficiencia por unidad</h3><div id="gEf"></div>
-        <p class="mut">Índice = 30% gestión oportuna (Administrador) + 20% contacto efectivo (TAOD) + 40% entrega (Farmacia) + 10% entregas con evidencia. Verde ≥ 80, amarillo 60–79, rojo &lt; 60.</p></div>
+        <div class="leg"><span class="FINALIZADA"></span>Finalizada <span class="EN_SITIO"></span>En sitio <span class="EN_GESTION"></span>En gestión <span class="REGISTRADA"></span>Registrada</div></div>
+      <div class="card"><div class="row" style="align-items:center"><h3 class="ct" style="flex:3;margin:0">Días de retraso · pacientes pendientes</h3>
+        <div style="flex:0 0 auto"><select id="kUni"><option value="">Todas las unidades</option></select></div></div><div id="gRet" style="margin-top:8px"></div>
+        <p class="mut">Días desde el registro en Receta Completa de los pacientes que aún no reciben su medicamento. Cada paciente se cuenta una vez, con su receta más antigua.</p></div>
     </div>
-    <div class="card"><h3 class="ct">Indicadores por unidad y por rol</h3>
-      <div class="tw"><table><thead><tr><th>Unidad</th><th>Renglones</th><th>Gestión capturada</th><th>Gestión oportuna</th><th>Días prom. a gestión</th><th>Contacto efectivo</th><th>Entregadas</th><th>Con evidencia</th><th>Índice</th><th>Retroalimentación</th></tr></thead><tbody id="tbEf"></tbody></table></div></div>
     <div class="card"><h3 class="ct">Responsables con gestiones pendientes o fuera de meta</h3>
       <p class="mut">Renglones sin gestión con más días de la meta desde que se cargaron, y gestiones capturadas fuera de meta, por unidad.</p>
       <div class="tw"><table><thead><tr><th>Unidad</th><th>Sin gestión fuera de meta</th><th>Gestionados fuera de meta</th><th>Quién capturó la gestión</th><th>Sin contacto</th><th>Localizados sin entregar</th></tr></thead><tbody id="tbRet"></tbody></table></div></div>
@@ -119,7 +118,8 @@ td{border-bottom:1px solid var(--ln);padding:6px;vertical-align:top}tr.it:hover 
 
   <div id="tResumen" class="hide">
     <div class="card"><h3 style="margin-top:0;color:var(--v)">Avance por unidad médica</h3>
-    <div class="tw"><table><thead><tr><th>Unidad</th><th>Renglones</th><th>Folios</th><th>REGISTRADA</th><th>EN GESTIÓN</th><th>EN SITIO</th><th>FINALIZADA</th><th>Sin gestión (Admin)</th><th>Sin contacto (TAOD)</th><th>Sin entrega (Farmacia)</th><th>Por actualizar en plataforma</th><th>% avance</th></tr></thead><tbody id="tbRes"></tbody></table></div></div>
+a    <div class="tw"><table><thead><tr><th>Unidad</th><th>Total</th><th>% avance</th><th>FINALIZADA</th><th>EN SITIO</th><th>EN GESTIÓN</th><th>REGISTRADA</th><th>Folios</th><th>Sin gestión (Admin)</th><th>Sin contacto (TAOD)</th><th>Sin entrega (Farmacia)</th><th>Por actualizar en plataforma</th></tr></thead><tbody id="tbRes"></tbody></table></div>
+    <p class="mut">% avance = finalizadas ÷ total de renglones. Verde ≥ 80 %, amarillo 60–79 %, rojo &lt; 60 %.</p></div>
   </div>
 
   <div id="tCarga" class="hide">
@@ -445,12 +445,12 @@ function render() {
   const base = visibles(), rs = filtrar(base).sort((a, b) => dias(b) - dias(a));
   const cnt = k => base.filter(r => estatusMonitor(r) === k).length;
   const mio = base.filter(r => pendRol(r, USER.rol)).length;
-  $('#kpis').innerHTML = [
-    ['', base.length, 'Renglones (folio + clave)', ''],
-    ['reg', cnt('REGISTRADA'), 'REGISTRADA', 'REGISTRADA'], ['ges', cnt('EN GESTIÓN'), 'EN GESTIÓN', 'EN GESTIÓN'],
-    ['sit', cnt('EN SITIO'), 'EN SITIO (en farmacia)', 'EN SITIO'], ['fin', cnt('FINALIZADA'), 'FINALIZADA (entregada)', 'FINALIZADA'],
+a  $('#kpis').innerHTML = [
+    ['', base.length, 'Total de renglones (folio + clave)', ''],
+    ['fin', cnt('FINALIZADA'), 'FINALIZADA (entregada)', 'FINALIZADA'], ['sit', cnt('EN SITIO'), 'EN SITIO (en farmacia)', 'EN SITIO'],
+    ['ges', cnt('EN GESTIÓN'), 'EN GESTIÓN', 'EN GESTIÓN'], ['reg', cnt('REGISTRADA'), 'REGISTRADA', 'REGISTRADA'],
     ['pla', mio, USER.rol === 'CAE' ? 'Por actualizar en plataforma' : 'Pendientes de mi rubro', '#']
-  ].map(([c, n, l, f]) => `<div class="kpi ${c}" data-f="${f}"><b>${n}</b><span>${l}</span></div>`).join('');
+  ].map(([c, n, l, f]) => `<div class="kpi ${c}" data-f="${f}"${c === 'fin' ? ' style="background:#eaf6ee"' : ''}><b>${n}</b><span>${l}</span></div>`).join('');
   $$('.kpi').forEach(k => k.onclick = () => { const f = k.dataset.f; if (f === '#') { $('#fVer').value = USER.rol === 'CAE' ? 'pla' : 'mio'; $('#fEst').value = ''; } else { $('#fEst').value = f; $('#fVer').value = ''; } render(); });
   const cae = USER.rol === 'CAE', verTel = cae || USER.rol === 'TAOD';
   $('#tb').innerHTML = rs.slice(0, 1500).map(r => {
@@ -562,9 +562,10 @@ function resumen() {
   for (const r of DATA) { const u = r.unidad || '(sin unidad)'; (g[u] = g[u] || []).push(r); }
   const rows = Object.entries(g).sort((a, b) => b[1].length - a[1].length).map(([u, rs]) => {
     const c = k => rs.filter(r => estatusMonitor(r) === k).length, fin = c('FINALIZADA');
-    return `<tr><td>${esc(u)}</td><td>${rs.length}</td><td>${new Set(rs.map(r => r.folio)).size}</td><td>${c('REGISTRADA')}</td><td>${c('EN GESTIÓN')}</td><td>${c('EN SITIO')}</td><td>${fin}</td>
+a    const p = rs.length ? Math.round(fin / rs.length * 100) : 0;
+    return `<tr><td>${esc(u)}</td><td><b>${rs.length}</b></td><td><span class="sem ${semc(p)}">${p}%</span></td><td><b style="color:#1e6b36">${fin}</b></td><td>${c('EN SITIO')}</td><td>${c('EN GESTIÓN')}</td><td>${c('REGISTRADA')}</td><td>${new Set(rs.map(r => r.folio)).size}</td>
       <td>${rs.filter(r => pendRol(r, 'ADM')).length}</td><td>${rs.filter(r => pendRol(r, 'TAOD')).length}</td><td>${rs.filter(r => pendRol(r, 'FAR')).length}</td>
-      <td>${rs.filter(pendPlataforma).length}</td><td><b>${rs.length ? Math.round(fin / rs.length * 100) : 0}%</b></td></tr>`; });
+      <td>${rs.filter(pendPlataforma).length}</td></tr>`; });
   $('#tbRes').innerHTML = rows.join('') || '<tr><td colspan="12" class="mut">Sin datos</td></tr>';
 }
 
@@ -590,27 +591,29 @@ function indicadores(rs, meta) {
     locSinE: rs.filter(r => /^Localizado/i.test(r.c_resultado || '') && !r.e_fechaEntrega).length };
 }
 function porUnidad() { const g = {}; for (const r of DATA) { const u = r.unidad || '(sin unidad)'; (g[u] = g[u] || []).push(r); } return g; }
-function caratula() {
-  const meta = parseInt($('#kMeta').value) || 2, G = indicadores(DATA, meta), U = porUnidad();
-  const cnt = k => DATA.filter(r => estatusMonitor(r) === k).length;
-  $('#kGlobal').innerHTML = [['', DATA.length, 'Renglones en seguimiento'], ['', new Set(DATA.map(r => r.folio)).size, 'Folios'],
-    ['fin', fpct(pct(cnt('FINALIZADA'), DATA.length)), 'Entregadas / finalizadas'], ['ges', fpct(G.oport), `Gestión oportuna (≤ ${meta} días)`],
-    ['sit', fpct(G.cont), 'Contacto efectivo'], ['pla', DATA.filter(pendPlataforma).length, 'Por actualizar en plataforma'],
-    ['', `<span class="sem ${semc(G.idx)}">${G.idx ?? '—'}</span>`, 'Índice de eficiencia OOAD']]
-    .map(([c, n, l]) => `<div class="kpi ${c}"><b>${n}</b><span>${l}</span></div>`).join('');
-  const lista = Object.entries(U).map(([u, rs]) => ({ u, rs, I: indicadores(rs, meta) }));
+afunction caratula() {
+  const meta = parseInt($('#kMeta').value) || 2, U = porUnidad(), cnt = k => DATA.filter(r => estatusMonitor(r) === k).length;
+  const pend = DATA.filter(r => estatusMonitor(r) !== 'FINALIZADA');
+  const pac = rs => { const m = {}; rs.forEach(r => { const k = r.curp || r.paciente || r.folio, d = dias(r); if (m[k] == null || d > m[k]) m[k] = d; }); return Object.values(m); };
+  const pp = pac(pend), prom = pp.length ? Math.round(pp.reduce((a, b) => a + b, 0) / pp.length) : 0;
+  $('#kGlobal').innerHTML = [['', DATA.length, 'Total de renglones (folio + clave)'], ['fin', `${cnt('FINALIZADA')} · ${fpct(pct(cnt('FINALIZADA'), DATA.length))}`, 'Finalizadas (entregadas)'],
+    ['sit', cnt('EN SITIO'), 'En sitio (en farmacia)'], ['reg', pp.length, 'Pacientes pendientes'], ['ges', prom, 'Días de retraso promedio'],
+    ['pla', DATA.filter(pendPlataforma).length, 'Por actualizar en plataforma']]
+    .map(([c, n, l]) => `<div class="kpi ${c}"${c === 'fin' ? ' style="background:#eaf6ee"' : ''}><b>${n}</b><span>${l}</span></div>`).join('');
+  const lista = Object.entries(U).map(([u, rs]) => ({ u, rs, I: indicadores(rs, meta) })).sort((a, b) => b.rs.length - a.rs.length);
   const col = { 'REGISTRADA': 'var(--reg)', 'EN GESTIÓN': 'var(--ges)', 'EN SITIO': 'var(--sit)', 'FINALIZADA': 'var(--fin)' };
-  $('#gEst').innerHTML = lista.sort((a, b) => b.rs.length - a.rs.length).map(({ u, rs }) => {
-    const seg = EST.map(e => { const k = rs.filter(r => estatusMonitor(r) === e).length; return k ? `<div style="width:${k / rs.length * 100}%;background:${col[e]}" title="${e}: ${k}">${k}</div>` : ''; }).join('');
+  $('#gEst').innerHTML = lista.map(({ u, rs }) => {
+    const seg = ['FINALIZADA', 'EN SITIO', 'EN GESTIÓN', 'REGISTRADA'].map(e => { const k = rs.filter(r => estatusMonitor(r) === e).length; return k ? `<div style="width:${k / rs.length * 100}%;background:${col[e]}" title="${e}: ${k}">${k}</div>` : ''; }).join('');
     return `<div class="bar"><span class="nm" title="${esc(u)}">${esc(u.replace(/^\d+\s+/, ''))}</span><div class="tr">${seg}</div><span class="vl">${rs.length}</span></div>`; }).join('') || '<p class="mut">Sin datos</p>';
-  const porIdx = [...lista].sort((a, b) => (b.I.idx ?? -1) - (a.I.idx ?? -1));
-  $('#gEf').innerHTML = porIdx.map(({ u, I }) => { const c = I.idx >= 80 ? '#3c9a5f' : I.idx >= 60 ? '#d4a72c' : '#d9534f';
-    return `<div class="bar"><span class="nm" title="${esc(u)}">${esc(u.replace(/^\d+\s+/, ''))}</span><div class="tr"><div style="width:${I.idx || 0}%;background:${c}"></div></div><span class="vl">${I.idx ?? '—'}</span></div>`; }).join('') || '<p class="mut">Sin datos</p>';
-  $('#tbEf').innerHTML = porIdx.map(({ u, I }) => `<tr><td>${esc(u)}</td><td>${I.n}</td><td>${fpct(I.gest)}</td><td><span class="sem ${semc(I.oport)}">${fpct(I.oport)}</span></td><td>${I.dG}</td>
-    <td><span class="sem ${semc(I.cont)}">${fpct(I.cont)}</span></td><td><span class="sem ${semc(I.ent)}">${fpct(I.ent)}</span></td><td>${fpct(I.evi)}</td>
-    <td><span class="sem ${semc(I.idx)}">${I.idx ?? '—'}</span></td><td><button class="sec min" data-fb="${esc(u)}">Ficha</button></td></tr>`).join('');
-  $$('[data-fb]').forEach(b => b.onclick = () => ficha(b.dataset.fb));
-  $('#tbRet').innerHTML = porIdx.filter(({ I }) => I.sinGFuera.length || I.gFuera.length || I.sinC || I.locSinE)
+  const sel = $('#kUni'), uv = sel.value, us = Object.keys(U).sort();
+  sel.innerHTML = '<option value="">Todas las unidades</option>' + us.map(u => `<option value="${esc(u)}">${esc(u.replace(/^\d+\s+/, ''))}</option>`).join('');
+  if (us.includes(uv)) sel.value = uv; sel.onchange = caratula;
+  const pv = pac(pend.filter(r => !sel.value || r.unidad === sel.value));
+  const R = [['0 a 7 días', 0, 7, '#3c9a5f'], ['8 a 15 días', 8, 15, '#9cc65a'], ['16 a 30 días', 16, 30, '#d4a72c'], ['31 a 60 días', 31, 60, '#e67e22'], ['Más de 60 días', 61, Infinity, '#d9534f']];
+  const cu = R.map(([l, a, b, c]) => ({ l, c, n: pv.filter(d => d >= a && d <= b).length })), mx = Math.max(1, ...cu.map(x => x.n));
+  $('#gRet').innerHTML = pv.length ? cu.map(({ l, c, n }) => `<div class="bar"><span class="nm">${l}</span><div class="tr"><div style="width:${n / mx * 100}%;background:${c}"></div></div><span class="vl">${n}</span></div>`).join('')
+    + '<div class="bar mut"><span class="nm">↑ Días de retraso</span><span style="flex:1;text-align:center">Cantidad de pacientes →</span><span class="vl"></span></div>' : '<p class="mut">Sin pacientes pendientes.</p>';
+  $('#tbRet').innerHTML = lista.filter(({ I }) => I.sinGFuera.length || I.gFuera.length || I.sinC || I.locSinE)
     .map(({ u, I }) => `<tr><td>${esc(u)}</td><td><b style="color:${I.sinGFuera.length ? '#c0392b' : 'inherit'}">${I.sinGFuera.length}</b></td><td>${I.gFuera.length}</td><td>${esc(I.resp.join(', ') || '—')}</td><td>${I.sinC}</td><td>${I.locSinE}</td></tr>`).join('')
     || '<tr><td colspan="6" class="mut">Sin rezagos con la meta actual.</td></tr>';
 }
@@ -647,10 +650,6 @@ function descargarBD() {
   const head = [...cols.map(f => tit[f] || f), 'ESTATUS MONITOR', 'PENDIENTE EN PLATAFORMA'];
   const wb = XLSX.utils.book_new(), ws = XLSX.utils.aoa_to_sheet([head, ...data]); ws['!autofilter'] = { ref: XLSX.utils.encode_range({ s: { r: 0, c: 0 }, e: { r: data.length, c: head.length - 1 } }) };
   XLSX.utils.book_append_sheet(wb, ws, 'Base');
-  const meta = parseInt($('#kMeta').value) || 2, U = porUnidad();
-  const ind = [['Unidad', 'Renglones', '% gestión capturada', '% gestión oportuna', 'Días prom. a gestión', '% contacto efectivo', '% entregadas', '% con evidencia', 'Índice de eficiencia', 'Sin gestión fuera de meta', 'Gestionados fuera de meta', 'Capturó gestión fuera de meta']];
-  Object.entries(U).forEach(([u, rs]) => { const I = indicadores(rs, meta); ind.push([u, I.n, I.gest, I.oport, I.dG, I.cont, I.ent, I.evi, I.idx, I.sinGFuera.length, I.gFuera.length, I.resp.join(', ')]); });
-  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(ind), 'Indicadores');
   XLSX.writeFile(wb, 'MonitorCAE_base_' + hoy() + '.xlsx');
 }
 
