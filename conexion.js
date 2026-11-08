@@ -86,23 +86,51 @@
   window.google.script = { run: crearRunner(null, null) };
   window.MonitorCAE = { llamar: llamar, salir: () => { borrarClave(); location.reload(); }, perfil: null };
 
-  // ---- pantalla de acceso ----
+  // ---- pantalla de acceso (portada) ----
+  const FONDO = 'fondo-cae.webp';
+  const CSS_ACCESO =
+    '#mcae-acceso .pt{position:fixed;inset:0;z-index:99999;background:#0B5345;font-family:"Segoe UI",system-ui,sans-serif;overflow:auto}' +
+    '#mcae-acceso .pt-img{position:absolute;inset:0;background:url(' + FONDO + ') center/cover no-repeat;opacity:0;transform:scale(1.04);transition:opacity .8s ease,transform 1.6s ease}' +
+    '#mcae-acceso .pt.ok .pt-img{opacity:1;transform:scale(1)}' +
+    '#mcae-acceso .pt-velo{position:absolute;inset:0;background:linear-gradient(100deg,rgba(11,58,48,.94) 0%,rgba(11,83,69,.86) 38%,rgba(11,83,69,.55) 70%,rgba(11,83,69,.35) 100%)}' +
+    '#mcae-acceso .pt-in{position:relative;min-height:100%;display:flex;align-items:center;justify-content:space-between;gap:48px;padding:48px 7vw;box-sizing:border-box;flex-wrap:wrap}' +
+    '#mcae-acceso .pt-tx{color:#fff;max-width:520px;flex:1 1 320px}' +
+    '#mcae-acceso .pt-tx small{display:block;letter-spacing:.14em;text-transform:uppercase;font-size:12px;opacity:.85}' +
+    '#mcae-acceso .pt-tx h1{font-size:clamp(34px,5vw,56px);line-height:1.05;margin:10px 0 14px;font-weight:700}' +
+    '#mcae-acceso .pt-tx .ln{width:64px;height:4px;background:#B38E5D;border-radius:2px;margin-bottom:16px}' +
+    '#mcae-acceso .pt-tx p{font-size:16px;line-height:1.55;margin:0;opacity:.92}' +
+    '#mcae-acceso form{background:#fff;padding:30px 32px;border-radius:14px;width:min(360px,100%);box-sizing:border-box;box-shadow:0 18px 50px rgba(0,0,0,.35);flex:0 0 auto}' +
+    '#mcae-acceso form h2{margin:0 0 4px;color:#0B5345;font-size:22px}' +
+    '#mcae-acceso form .s{margin:0 0 18px;color:#5a6b65;font-size:13px}' +
+    '#mcae-acceso label{font-size:13px;color:#333}' +
+    '#mcae-acceso input{width:100%;box-sizing:border-box;padding:11px;margin:6px 0 10px;border:1px solid #bbb;border-radius:8px;font-size:15px}' +
+    '#mcae-acceso input:focus{outline:2px solid #B38E5D;border-color:#B38E5D}' +
+    '#mcae-acceso .m{color:#b00020;font-size:13px;min-height:18px;margin-bottom:8px}' +
+    '#mcae-acceso button{width:100%;padding:11px;border:0;border-radius:8px;background:#0B5345;color:#fff;font-size:15px;cursor:pointer}' +
+    '#mcae-acceso button:hover{background:#13322B}' +
+    '@media (max-width:760px){#mcae-acceso .pt-velo{background:rgba(11,83,69,.86)}#mcae-acceso .pt-in{justify-content:center;padding:32px 20px}' +
+    '#mcae-acceso .pt-tx{text-align:center;flex-basis:100%}#mcae-acceso .pt-tx .ln{margin:0 auto 14px}#mcae-acceso .pt-tx p{display:none}}';
   function mostrarAcceso(msg) {
     if (document.getElementById('mcae-acceso')) return;
     const d = document.createElement('div');
     d.id = 'mcae-acceso';
     d.innerHTML =
-      '<div style="position:fixed;inset:0;background:#0B5345;display:flex;align-items:center;justify-content:center;z-index:99999;font-family:system-ui,sans-serif">' +
-      '<form style="background:#fff;padding:28px 32px;border-radius:12px;width:min(340px,90vw);box-shadow:0 10px 30px rgba(0,0,0,.25)">' +
-      '<h2 style="margin:0 0 4px;color:#0B5345">Monitor CAE</h2>' +
-      '<p style="margin:0 0 18px;color:#555;font-size:14px">Receta Completa<br>Coordinación de Abastecimiento y Equipamiento – OOAD Yucatán</p>' +
-      '<label style="font-size:13px;color:#333">Clave de acceso</label>' +
-      '<input id="mcae-clave" type="password" autocomplete="current-password" required style="width:100%;box-sizing:border-box;padding:10px;margin:6px 0 12px;border:1px solid #bbb;border-radius:8px;font-size:15px">' +
-      '<div id="mcae-msg" style="color:#b00020;font-size:13px;min-height:18px;margin-bottom:8px">' + (msg || '') + '</div>' +
-      '<button style="width:100%;padding:10px;border:0;border-radius:8px;background:#0B5345;color:#fff;font-size:15px;cursor:pointer">Entrar</button>' +
-      '</form></div>';
+      '<style>' + CSS_ACCESO + '</style>' +
+      '<div class="pt"><div class="pt-img"></div><div class="pt-velo"></div><div class="pt-in">' +
+      '<div class="pt-tx"><small>IMSS · OOAD Yucatán</small><h1>Monitor CAE</h1><div class="ln"></div>' +
+      '<p>Seguimiento a los reportes de Receta Completa: atención directa y oportuna al paciente, con el equipo multidisciplinario de cada unidad médica.</p></div>' +
+      '<form><h2>Acceso</h2><p class="s">Coordinación de Abastecimiento y Equipamiento</p>' +
+      '<label for="mcae-clave">Clave de acceso</label>' +
+      '<input id="mcae-clave" type="password" autocomplete="current-password" required>' +
+      '<div id="mcae-msg" class="m">' + (msg || '') + '</div>' +
+      '<button>Entrar</button>' +
+      '</form></div></div>';
     document.body.appendChild(d);
     quitarCortina(); // la pantalla de acceso ya cubre todo
+    // La foto aparece suave cuando termina de cargar; si falla, se queda el verde.
+    const pre = new Image();
+    pre.onload = () => d.querySelector('.pt').classList.add('ok');
+    pre.src = FONDO;
     d.querySelector('form').addEventListener('submit', async ev => {
       ev.preventDefault();
       const c = d.querySelector('#mcae-clave').value.trim();
