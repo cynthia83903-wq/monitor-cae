@@ -32,7 +32,7 @@ td{border-bottom:1px solid var(--ln);padding:6px;vertical-align:top}tr.it:hover 
 .chip{display:inline-block;border-radius:10px;padding:2px 8px;font-size:11px;font-weight:600;white-space:nowrap}
 .REGISTRADA{background:var(--reg)}.EN_GESTION{background:var(--ges)}.EN_SITIO{background:var(--sit)}.FINALIZADA{background:var(--fin)}
 .dots span{display:inline-block;width:20px;height:20px;line-height:20px;text-align:center;border-radius:50%;font-size:10px;font-weight:700;margin-right:3px;background:#e7ecea;color:#8a9893}
-.dots span.ok{background:#3c9a5f;color:#fff}
+.dots span.ok{background:#3c9a5f;color:#fff} .dots span.q{background:#e8a317;color:#fff} .queja{background:#fff8e6;border:1px solid #e8c36a;border-radius:10px;padding:12px 14px;margin:12px 0} .queja h3{margin:0 0 4px;color:#8a5a00} .queja .txt{background:#fff;border-left:4px solid #e8a317;padding:8px 10px;margin:8px 0;white-space:pre-wrap}
 .tabs{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}.tabs button{background:#fff;color:var(--v)}.tabs button.on{background:var(--v);color:#fff}
 .hide{display:none!important}.mut{color:var(--mut);font-size:12px}.warn{background:#fff7e0;border:1px solid #f0d58a;border-radius:8px;padding:8px 10px;font-size:13px}
 .modal{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:flex-start;justify-content:center;padding:24px;overflow:auto;z-index:20}
@@ -190,21 +190,21 @@ const CONFIG_FIJA = { mode: '', spSite: '', spList: 'MonitorCAE', gUrl: '', gKey
 
 /* ---------------- campos ---------------- */
 const F_BASE = ['id','ooad','fechaRegistro','diasRegistro','paciente','curp','telefono','telefono2','correo','dependencia','unidad','folio',
-  'fechaExpedicion','tipoReceta','clave','descripcion','piezas','estatusRC','estatusRecetaRC','accionCAE','fechaCarga','fechaAlta'];
+  'fechaExpedicion','tipoReceta','clave','descripcion','piezas','estatusRC','estatusRecetaRC','accionCAE','fechaCarga','fechaAlta','obsFolio'];
 const F_G = ['g_accion','g_fechaDisponible','g_obs','g_resp','g_reg'];
-const F_C = ['c_fecha','c_medio','c_resultado','c_fechaCita','c_obs','c_resp','c_reg'];
+const F_C = ['c_fecha','c_medio','c_resultado','c_fechaCita','c_obs','c_resp','c_reg','c_qEstatus','c_qObs','c_qResp','c_qReg'];
 const F_E = ['e_fechaResguardo','e_fechaEntrega','e_piezas','e_receptor','e_evidencia','e_obs','e_resp','e_reg'];
 const F_P = ['p_estatus','p_fecha','p_resp'];
 const FIELDS = [...F_BASE, ...F_G, ...F_C, ...F_E, ...F_P];
 const BASE_UPD = ['ooad','fechaRegistro','diasRegistro','paciente','curp','telefono','telefono2','correo','dependencia','unidad','fechaExpedicion',
-  'tipoReceta','descripcion','piezas','estatusRC','estatusRecetaRC','accionCAE','fechaCarga'];
+  'tipoReceta','descripcion','piezas','estatusRC','estatusRecetaRC','accionCAE','fechaCarga','obsFolio'];
 
 const OPC = {
   g_accion: ['Existencia en farmacia de la unidad','Traspaso desde otra unidad','Orden / remisión de Suministro (almacén delegacional)',
     'Compra emergente','Clave sustituta indicada por el médico','Medicamento ya entregado – cerrar folio','Otro (ver observaciones)'],
   c_medio: ['Llamada telefónica','WhatsApp / SMS','Correo electrónico','Presencial en la unidad'],
   c_resultado: ['Localizado – acudirá por el medicamento','Localizado – cita programada para entrega','No contesta / no localizado (reintentar)',
-    'Número incorrecto o sin datos de contacto','Paciente ya adquirió o recibió el medicamento','Paciente ya no lo requiere / rechaza','Otro (ver observaciones)']
+    'Número incorrecto o sin datos de contacto','Paciente ya adquirió o recibió el medicamento','Paciente ya no lo requiere / rechaza','Otro (ver observaciones)'], c_qEstatus: ['Queja atendida por la TAOD','Comunicada al cuerpo de gobierno','No requiere seguimiento (comentario sin queja)']
 };
 const ROL = { ADM: 'Administrador(a)', TAOD: 'TAOD', FAR: 'Coord. de Farmacia', CAE: 'Coordinación de Abastecimiento y Equipamiento' };
 const RANK = { 'REGISTRADA': 0, 'EN GESTIÓN': 1, 'EN GESTION': 1, 'EN SITIO': 2, 'FINALIZADA': 3 };
@@ -260,7 +260,7 @@ function pendRol(r, rol) {
 /* ---------- reglas de carga (las mismas que cargarRC_ en Código.gs) ----------
    modo 'RC': agrega solo folios nuevos; en los existentes actualiza estatus/días y completa contacto.
    modo 'PLATAFORMA': solo actualiza la acción sugerida (columna Acciones) de los existentes. */
-const CONTACTO = ['telefono', 'telefono2', 'correo'];
+const CONTACTO = ['telefono', 'telefono2', 'correo']; const SIN_OBS = /^(sin (reporte|informacion|comentarios?|observacion(es)?|novedad)|ningun[oa]?|n\/?a|no aplica|no|n|na|ok|no tengo ningun comentario( al respecto)?)$/; function quejaActiva(r) { const t = norm2(r.obsFolio); return !!t && /[a-z0-9]/.test(t) && !SIN_OBS.test(t); } function norm2(s) { return String(s ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[\s.,;:!¡¿?\-]+$/, '').replace(/^[\s.\-]+/, '').replace(/\s+/g, ' ').trim(); } function quejaPend(r) { return quejaActiva(r) && !r.c_qEstatus; }
 function fusionar(mapa, regs, modo) {
   const folios = new Set(Object.values(mapa).map(o => String(o.folio).trim()));
   const x = { nuevos: 0, actualizados: 0, finalizadas: 0, acciones: 0, omitFolio: 0, omitFin: 0, sinRegistro: 0 };
@@ -436,7 +436,7 @@ function visibles() {
 function filtrar(rs) {
   const u = $('#fUnidad').value, e = $('#fEst').value, v = $('#fVer').value, t = norm($('#fTxt').value);
   return rs.filter(r => (!u || r.unidad === u) && (!e || estatusMonitor(r) === e)
-    && (!v || (v === 'mio' && pendRol(r, USER.rol === 'CAE' ? 'CAE' : USER.rol)) || (v === 'pla' && pendPlataforma(r)))
+    && (!v || (v === 'mio' && (pendRol(r, USER.rol === 'CAE' ? 'CAE' : USER.rol) || (USER.rol === 'TAOD' && quejaPend(r)))) || (v === 'pla' && pendPlataforma(r)))
     && (!t || norm([r.folio, r.paciente, r.clave, r.descripcion, r.curp].join(' ')).includes(t)));
 }
 function dias(r) { const d = parseInt(r.diasRegistro) || 0, c = diasDesde(r.fechaCarga); return d + (c || 0); }
@@ -444,7 +444,7 @@ function render() {
   if (!USER || $('#vApp').classList.contains('hide')) return;
   const base = visibles(), rs = filtrar(base).sort((a, b) => dias(b) - dias(a));
   const cnt = k => base.filter(r => estatusMonitor(r) === k).length;
-  const mio = base.filter(r => pendRol(r, USER.rol)).length;
+  const mio = base.filter(r => pendRol(r, USER.rol) || (USER.rol === 'TAOD' && quejaPend(r))).length;
   $('#kpis').innerHTML = [
     ['', base.length, 'Total de renglones (folio + clave)', ''],
     ['fin', cnt('FINALIZADA'), 'FINALIZADA (entregada)', 'FINALIZADA'], ['sit', cnt('EN SITIO'), 'EN SITIO (en farmacia)', 'EN SITIO'],
@@ -460,7 +460,7 @@ function render() {
       <td>${esc(String(r.unidad).replace(/^\d+\s+/, ''))}</td><td>${esc(r.folio)}</td><td>${esc(r.paciente)}${verTel ? `<br><span class="mut">${[r.telefono, r.telefono2].filter(Boolean).map(esc).join(' / ') || 'sin teléfono'}${r.correo ? ' · ' + esc(r.correo) : ''}</span>` : ''}</td>
       <td><b>${esc(r.clave)}</b><br><span class="mut">${esc(String(r.descripcion).slice(0, 70))}</span></td><td>${esc(r.piezas)}</td>
       <td class="mut" style="max-width:220px">${esc(r.accionCAE || '—')}</td>
-      <td class="dots"><span class="${r.g_accion ? 'ok' : ''}" title="Gestión (Administrador)">G</span><span class="${r.c_resultado ? 'ok' : ''}" title="Contacto (TAOD)">C</span><span class="${r.e_fechaEntrega ? 'ok' : ''}" title="Entrega (Farmacia)">E</span></td>
+      a<td class="dots"><span class="${r.g_accion ? 'ok' : ''}" title="Gestión (Administrador)">G</span><span class="${r.c_resultado ? 'ok' : ''}" title="Contacto (TAOD)">C</span><span class="${r.e_fechaEntrega ? 'ok' : ''}" title="Entrega (Farmacia)">E</span>${!cae && quejaActiva(r) ? `<span class="${r.c_qEstatus ? 'ok' : 'q'}" title="Queja del paciente${r.c_qEstatus ? ' · ' + esc(r.c_qEstatus) : ' · pendiente de seguimiento (TAOD)'}">Q</span>` : ''}</td>
       <td>${chip(r.estatusRC)}</td><td>${chip(em)}</td>
       ${cae ? `<td>${pendPlataforma(r) ? '<span class="chip" style="background:#f7e3c4">Actualizar</span>' : '<span class="mut">al día</span>'}</td>` : '<td class="hide"></td>'}
     </tr>`; }).join('') || '<tr><td colspan="11" class="mut">Sin renglones con estos filtros.</td></tr>';
@@ -490,7 +490,7 @@ function abrir(id) {
       <div><b>Registro en Receta Completa</b>${esc(fmtFecha(r.fechaRegistro))} (${dias(r)} días)</div><div><b>Estatus en RC</b>${chip(r.estatusRC)} ${esc(r.estatusRecetaRC || '')}</div>
       <div style="grid-column:1/-1"><b>Medicamento</b>${esc(r.clave)} – ${esc(r.descripcion)} · <b style="display:inline;color:var(--tx)">${esc(r.piezas)} piezas</b></div>
       ${r.accionCAE ? `<div style="grid-column:1/-1"><b>Acción sugerida por CAE</b>${esc(r.accionCAE)}</div>` : ''}
-    </div>
+    </div> ${!cae && quejaActiva(r) ? `<div class="queja" id="qBox"><h3>Observaciones folio · lo que reportó el paciente</h3> <div class="mut">TAOD: da seguimiento a la queja y registra qué se hizo. Aplica a todo el folio.</div> <div class="txt">${esc(r.obsFolio)}</div> <div class="row"><div>${campo('c_qEstatus', 'Seguimiento que se le dio', 'sel', r, rol === 'TAOD')}</div></div> ${campo('c_qObs', 'Observaciones del seguimiento', 'area', r, rol === 'TAOD')} ${r.c_qResp ? `<p class="mut">Registró: ${esc(r.c_qResp)} · ${esc(r.c_qReg)}</p>` : ''}${rol === 'TAOD' ? '<button id="qSave">Guardar seguimiento de la queja</button>' : ''}</div>` : ''}
     <div class="grid3">
       <div class="sec ${rol === 'ADM' ? 'mine' : ''} ${eG ? '' : 'lock'}" data-p="g"><h3>1 · Gestión</h3><div class="mut">Administrador(a): conseguir el medicamento</div>
         ${campo('g_accion', '¿Cómo se obtiene el medicamento?', 'sel', r, eG)}
@@ -528,7 +528,7 @@ function abrir(id) {
   $('#modal').classList.remove('hide');
   $('#mX').onclick = cerrar;
   $$('[data-save]').forEach(b => b.onclick = () => guardar(r, b.dataset.save, b));
-  if ($('#pSave')) $('#pSave').onclick = () => guardarPatch(r, { p_estatus: $('#pEst').value, p_fecha: ahora(), p_resp: USER.nombre }, $('#pSave'));
+  if ($('#qSave')) $('#qSave').onclick = () => guardarQueja(r, $('#qSave')); if ($('#pSave')) $('#pSave').onclick = () => guardarPatch(r, { p_estatus: $('#pEst').value, p_fecha: ahora(), p_resp: USER.nombre }, $('#pSave'));
 }
 function cerrar() { $('#modal').classList.add('hide'); document.body.classList.remove('fm'); }
 async function guardar(r, p, btn) {
@@ -547,7 +547,7 @@ async function guardar(r, p, btn) {
   patch[p + '_resp'] = USER.nombre + (USER.rol === 'CAE' ? ' (CAE)' : ''); patch[p + '_reg'] = ahora();
   await guardarPatch(r, patch, btn);
 }
-let _sinEvi = false;
+async function guardarQueja(r, btn) { const patch = { c_qEstatus: $('#qBox [data-k="c_qEstatus"]').value, c_qObs: $('#qBox [data-k="c_qObs"]').value.trim() }; if (!patch.c_qEstatus) return toast('Indica el seguimiento que se le dio a la queja'); patch.c_qResp = USER.nombre; patch.c_qReg = ahora(); const del = DATA.filter(x => x.folio === r.folio && x.unidad === r.unidad); const t = btn.textContent; btn.disabled = true; btn.textContent = 'Guardando…'; try { for (const x of del) { await DB.update(x.id, patch); Object.assign(x, patch); } toast('Seguimiento de la queja guardado ✓'); cerrar(); render(); } catch (e) { toast('No se guardó: ' + e.message, 7000); } finally { btn.disabled = false; btn.textContent = t; } } let _sinEvi = false;
 function confirmarSinEvidencia() { if (_sinEvi) return true; _sinEvi = true; toast('Falta la evidencia de entrega. Si de todos modos quieres guardar, vuelve a presionar "Guardar entrega".', 6000); return false; }
 async function guardarPatch(r, patch, btn) {
   const t = btn.textContent; btn.disabled = true; btn.textContent = 'Guardando…';
@@ -644,7 +644,7 @@ function descargarBD() {
     g_accion: 'GESTIÓN: cómo se obtiene', g_fechaDisponible: 'GESTIÓN: fecha estimada', g_obs: 'GESTIÓN: observaciones', g_resp: 'GESTIÓN: capturó', g_reg: 'GESTIÓN: fecha captura',
     c_fecha: 'CONTACTO: fecha', c_medio: 'CONTACTO: medio', c_resultado: 'CONTACTO: resultado', c_fechaCita: 'CONTACTO: fecha acordada', c_obs: 'CONTACTO: observaciones', c_resp: 'CONTACTO: capturó', c_reg: 'CONTACTO: fecha captura',
     e_fechaResguardo: 'ENTREGA: fecha resguardo', e_fechaEntrega: 'ENTREGA: fecha entrega', e_piezas: 'ENTREGA: piezas', e_receptor: 'ENTREGA: recibió', e_evidencia: 'ENTREGA: evidencia', e_obs: 'ENTREGA: observaciones', e_resp: 'ENTREGA: capturó', e_reg: 'ENTREGA: fecha captura',
-    p_estatus: 'PLATAFORMA: estatus actualizado', p_fecha: 'PLATAFORMA: fecha', p_resp: 'PLATAFORMA: actualizó' };
+    p_estatus: 'PLATAFORMA: estatus actualizado', p_fecha: 'PLATAFORMA: fecha', p_resp: 'PLATAFORMA: actualizó', obsFolio: 'Observaciones folio (paciente)', c_qEstatus: 'QUEJA: seguimiento', c_qObs: 'QUEJA: observaciones', c_qResp: 'QUEJA: registró', c_qReg: 'QUEJA: fecha registro' };
   const cols = FIELDS.filter(f => f !== 'id');
   const data = DATA.map(r => [...cols.map(f => f === 'e_evidencia' && String(r[f] || '').startsWith('data:') ? 'Sí (en Monitor)' : r[f] ?? ''), estatusMonitor(r), pendPlataforma(r) ? 'SÍ' : 'NO']);
   const head = [...cols.map(f => tit[f] || f), 'ESTATUS MONITOR', 'PENDIENTE EN PLATAFORMA'];
@@ -675,7 +675,7 @@ const MAPA = { ooad: ['ooad'], fechaRegistro: ['fechaderegistro'], diasRegistro:
   telefono: ['telefonocelular'], telefono2: ['otrotelefono'], correo: ['correoelectronico'], dependencia: ['dependencia'], unidad: ['unidadmedica'],
   folio: ['folioonumeroreceta', 'folioreceta'], fechaExpedicion: ['fechadeexpediciondelareceta'], tipoReceta: ['recetaesmanualodigital'],
   clave: ['clavemedicamento'], descripcion: ['descripconmedicamento', 'descripcionmedicamento'], piezas: ['piezas'], estatusRC: ['estatusactual'],
-  estatusRecetaRC: ['estatusreceta'], accionCAE: ['acciones'] };
+  estatusRecetaRC: ['estatusreceta'], accionCAE: ['acciones'], obsFolio: ['observacionesfolio'] };
 function leerArchivo(file) {
   return new Promise((ok, ko) => { const fr = new FileReader();
     fr.onload = () => { try {
@@ -705,7 +705,7 @@ function convertir(rows) {
     for (const k of Object.keys(ix)) o[k] = r[ix[k]] ?? '';
     o.fechaRegistro = fmtFecha(o.fechaRegistro); o.fechaExpedicion = fmtFecha(o.fechaExpedicion);
     o.estatusRC = String(o.estatusRC || 'REGISTRADA').trim().toUpperCase().replace(/^EN GESTION$/, 'EN GESTIÓN'); o.folio = folio; o.clave = clave;
-    CONTACTO.forEach(k => o[k] = String(o[k] ?? '').trim()); o.accionCAE = String(o.accionCAE ?? '').trim();
+    CONTACTO.forEach(k => o[k] = String(o[k] ?? '').trim()); o.accionCAE = String(o.accionCAE ?? '').trim(); o.obsFolio = String(o.obsFolio ?? '').trim();
     o.fechaCarga = fc; o.fechaAlta = fc; o.diasRegistro = String(o.diasRegistro);
     let id = folio + '|' + clave; vistos[id] = (vistos[id] || 0) + 1; if (vistos[id] > 1) id += '|' + vistos[id];
     o.id = id; out[id] = o;
