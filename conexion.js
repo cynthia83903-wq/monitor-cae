@@ -5,7 +5,7 @@
  * Va en el <head> de index.html, ANTES de cualquier otro <script>.
  */
 (function () {
-  const API = 'https://script.google.com/macros/s/AKfycbzaaSc8juzpfn88qGOF7qpENtaTe0Gc6wLXf3sbpHjhEi5q5tpaSYwbMYwkQHLfHULGVg/exec';
+  const API = '/api.php'; // intermediario en monitorcae.com (la dirección del Apps Script ya no está a la vista)
   const KEY = 'mcae_clave';
 
   // ---- cortina de carga ----
