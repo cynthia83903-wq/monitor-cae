@@ -1,6 +1,31 @@
-# Monitor CAE: que el navegador siempre revise si hay versión nueva de la página y el JS
+# Monitor CAE – configuración del servidor (Hostinger)
+
+# 1) Siempre con candado: todo lo que llegue por http:// se manda a https://
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteCond %{HTTPS} off
+  RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+</IfModule>
+
 <IfModule mod_headers.c>
+  # 2) Que el navegador siempre revise si hay versión nueva de la página y el JS
   <FilesMatch "\.(html|js)$">
     Header set Cache-Control "no-cache"
   </FilesMatch>
+
+  # 3) Encabezados de seguridad
+  # Ninguna otra página puede meter el monitor dentro de la suya (evita engaños tipo "clickjacking")
+  Header always set X-Frame-Options "DENY"
+  Header always set Content-Security-Policy "frame-ancestors 'none'"
+  # El navegador no "adivina" tipos de archivo
+  Header always set X-Content-Type-Options "nosniff"
+  # No se envía la dirección completa de la página a otros sitios
+  Header always set Referrer-Policy "strict-origin-when-cross-origin"
+  # Recordar durante un año que el sitio solo se abre con https
+  Header always set Strict-Transport-Security "max-age=31536000"
+  # La página no pide cámara, micrófono ni ubicación
+  Header always set Permissions-Policy "camera=(), microphone=(), geolocation=()"
 </IfModule>
+
+# 4) No mostrar listados de carpetas
+Options -Indexes
