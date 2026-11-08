@@ -1,0 +1,6 @@
+# Monitor CAE: que el navegador siempre revise si hay versión nueva de la página y el JS
+<IfModule mod_headers.c>
+  <FilesMatch "\.(html|js)$">
+    Header set Cache-Control "no-cache"
+  </FilesMatch>
+</IfModule>
