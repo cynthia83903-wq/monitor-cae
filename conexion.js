@@ -1,5 +1,5 @@
 /**
- * MONITOR CAE – conexión GitHub Pages ⇄ Apps Script
+ * MONITOR CAE – conexión monitorcae.com ⇄ Apps Script
  * Imita google.script.run para que la pantalla original funcione igual,
  * pero cada llamada viaja al motor de Apps Script junto con la clave de acceso.
  * Va en el <head> de index.html, ANTES de cualquier otro <script>.
@@ -7,6 +7,46 @@
 (function () {
   const API = 'https://script.google.com/macros/s/AKfycbzaaSc8juzpfn88qGOF7qpENtaTe0Gc6wLXf3sbpHjhEi5q5tpaSYwbMYwkQHLfHULGVg/exec';
   const KEY = 'mcae_clave';
+
+  // ---- cortina de carga ----
+  // Tapa el esqueleto de la app desde el primer instante (antes de que exista <body>),
+  // con el mismo diseño de la pantalla de acceso. Se quita sola cuando la app ya tiene datos.
+  (function ponerCortina() {
+    const css =
+      'html.mcae-cargando{background:#0B5345}' +
+      'html.mcae-cargando body{visibility:hidden}' +
+      'html.mcae-cargando #mcae-acceso{visibility:visible}' +
+      'html.mcae-cargando::before{content:"";position:fixed;inset:0;background:#0B5345;z-index:99990}' +
+      'html.mcae-cargando::after{content:"Monitor CAE\\A Cargando…";white-space:pre;position:fixed;top:50%;left:50%;' +
+      'transform:translate(-50%,-50%);background:#fff;color:#0B5345;padding:28px 32px;border-radius:12px;' +
+      'width:min(340px,90vw);box-sizing:border-box;box-shadow:0 10px 30px rgba(0,0,0,.25);text-align:center;' +
+      'font:600 20px/1.6 system-ui,sans-serif;z-index:99991}' +
+      'html.mcae-sin-cortina body{animation:mcaeAparece .25s ease-out}' +
+      '@keyframes mcaeAparece{from{opacity:0}to{opacity:1}}';
+    const st = document.createElement('style');
+    st.id = 'mcae-cortina-css';
+    st.textContent = css;
+    document.head ? document.head.appendChild(st) : document.documentElement.appendChild(st);
+    document.documentElement.classList.add('mcae-cargando');
+    // Seguro: si algo falla, a los 25 s se quita para no dejar la pantalla tapada.
+    setTimeout(quitarCortina, 25000);
+  })();
+  function quitarCortina() {
+    const h = document.documentElement;
+    if (!h.classList.contains('mcae-cargando')) return;
+    h.classList.remove('mcae-cargando');
+    h.classList.add('mcae-sin-cortina');
+  }
+  // Quita la cortina en cuanto la app (#vApp) se hace visible.
+  function vigilarApp() {
+    const app = document.getElementById('vApp');
+    if (!app) { quitarCortina(); return; }
+    if (!app.classList.contains('hide')) { quitarCortina(); return; }
+    const mo = new MutationObserver(() => {
+      if (!app.classList.contains('hide')) { mo.disconnect(); quitarCortina(); }
+    });
+    mo.observe(app, { attributes: true, attributeFilter: ['class'] });
+  }
 
   function leerClave() { try { return sessionStorage.getItem(KEY) || ''; } catch (e) { return window.__mcaeClave || ''; } }
   function guardarClave(c) { try { sessionStorage.setItem(KEY, c); } catch (e) { window.__mcaeClave = c; } }
@@ -62,6 +102,7 @@
       '<button style="width:100%;padding:10px;border:0;border-radius:8px;background:#0B5345;color:#fff;font-size:15px;cursor:pointer">Entrar</button>' +
       '</form></div>';
     document.body.appendChild(d);
+    quitarCortina(); // la pantalla de acceso ya cubre todo
     d.querySelector('form').addEventListener('submit', async ev => {
       ev.preventDefault();
       const c = d.querySelector('#mcae-clave').value.trim();
@@ -78,7 +119,8 @@
   // Al cargar: si no hay clave, pide acceso antes de mostrar nada.
   document.addEventListener('DOMContentLoaded', async () => {
     if (!leerClave()) { mostrarAcceso(); return; }
+    vigilarApp();
     try { window.MonitorCAE.perfil = await llamar('apiLogin', []); document.dispatchEvent(new CustomEvent('mcae-perfil', { detail: window.MonitorCAE.perfil })); }
-    catch (e) { /* mostrarAcceso ya se encargó */ }
+    catch (e) { quitarCortina(); /* si fue la clave, mostrarAcceso ya se encargó */ }
   });
 })();
