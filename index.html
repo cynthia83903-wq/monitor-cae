@@ -406,7 +406,7 @@ function conectar() {
   else if (CFG.mode === 'google') { GoogleDB.url = CFG.gUrl; GoogleDB.key = CFG.gKey; DB = GoogleDB; }
   else if (CFG.mode === 'sharepoint') { SharePointDB.site = CFG.spSite || location.href.split('/SiteAssets')[0].split('/Shared')[0]; SharePointDB.list = CFG.spList || 'MonitorCAE'; DB = SharePointDB; }
   else DB = DemoDB;
-  $('#bMode').textContent = 'Base: ' + DB.name;
+  $('#bMode').classList.add('hide');
 }
 async function cargar() {
   try { $('#tb').innerHTML = '<tr><td colspan="11" class="mut">Cargando…</td></tr>'; DATA = await DB.list(); }
@@ -424,7 +424,7 @@ function abrirApp() {
   const cae = USER.rol === 'CAE';
   $$('[data-cae]').forEach(e => e.classList.toggle('hide', !cae));
   $('#fUniBox').classList.toggle('hide', !cae);
-  $('#bUser').textContent = cae ? `${USER.nombre} · CAE` : `${USER.nombre} · ${ROL[USER.rol]} · ${USER.unidad}`;
+  const nom = USER.nombre && USER.nombre !== ROL[USER.rol] && USER.nombre !== 'Coordinación de Abasto' ? USER.nombre : ''; $('#bUser').textContent = (cae ? [nom, 'CAE'] : [nom, ROL[USER.rol], USER.unidad]).filter(Boolean).join(' · ');
   tab('lista'); render();
 }
 
