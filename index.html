@@ -50,6 +50,10 @@ td{border-bottom:1px solid var(--ln);padding:6px;vertical-align:top}tr.it:hover 
 .bar{display:flex;align-items:center;gap:8px;margin:5px 0;font-size:12px}.bar .nm{width:170px;flex:0 0 170px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .bar .tr{flex:1;display:flex;height:20px;border-radius:4px;overflow:hidden;background:#eef1f0}.bar .tr div{height:100%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600}
 .bar .vl{width:44px;text-align:right;font-weight:700}
+.rck{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:12px 0}.rck>div{background:#fff;border:1px solid var(--ln);border-radius:10px;padding:12px 14px;border-top:5px solid var(--v)}.rck b{font-size:28px;display:block;margin-top:6px}.rck span{font-size:13px;color:var(--mut)}
+.rck .reg{border-top-color:#7a8cc8}.rck .ges{border-top-color:#d4a72c}.rck .sit{border-top-color:#e67e22}.rck .fe{border-top-color:#3aa6a6}.rck .fo{border-top-color:#3c9a5f}
+.mot{display:grid;grid-template-columns:1fr 1fr;gap:6px 28px}@media(max-width:900px){.mot{grid-template-columns:1fr}}.mot>div{padding:6px 0;border-bottom:1px solid var(--ln)}.mot .h{display:flex;justify-content:space-between;gap:10px;font-size:13px}.mot .t{height:6px;background:#eef1f0;border-radius:3px;margin-top:5px}.mot .t i{display:block;height:100%;background:#3c9a5f;border-radius:3px}
+.crit li{margin:3px 0;font-size:13px}
 .leg{font-size:12px;color:var(--mut);margin-top:8px}.leg span{display:inline-block;width:12px;height:12px;border-radius:3px;margin:0 4px 0 10px;vertical-align:-2px}
 .sem{display:inline-block;min-width:44px;text-align:center;border-radius:10px;padding:2px 8px;font-weight:700}
 .s-v{background:#C6EFCE;color:#1e6b36}.s-a{background:#FFF2CC;color:#8a6400}.s-r{background:#FFC7CE;color:#9c1c28}
@@ -75,6 +79,7 @@ td{border-bottom:1px solid var(--ln);padding:6px;vertical-align:top}tr.it:hover 
   <div class="tabs" id="tabs">
     <button data-t="lista" class="on">Recetas</button>
     <button data-t="caratula" data-cae>Carátula CAE</button>
+    <button data-t="rc" data-cae>Tablero RC</button>
     <button data-t="resumen" data-cae>Resumen por unidad</button>
     <button data-t="carga" data-cae>Cargar RC</button>
     <button data-t="config" data-cae>Configuración</button>
@@ -114,6 +119,33 @@ td{border-bottom:1px solid var(--ln);padding:6px;vertical-align:top}tr.it:hover 
     <div class="card"><h3 class="ct">Responsables con gestiones pendientes o fuera de meta</h3>
       <p class="mut">Renglones sin gestión con más días de la meta desde que se cargaron, y gestiones capturadas fuera de meta, por unidad.</p>
       <div class="tw"><table><thead><tr><th>Unidad</th><th>Sin gestión fuera de meta</th><th>Gestionados fuera de meta</th><th>Quién capturó la gestión</th><th>Sin contacto</th><th>Localizados sin entregar</th></tr></thead><tbody id="tbRet"></tbody></table></div></div>
+  </div>
+
+  <div id="tRc" class="hide">
+    <div class="card"><div class="row" style="align-items:flex-end">
+      <h2 style="margin:0;color:var(--v);flex:3">Tablero RC · mismos criterios que rc.apps.ocp.imss.gob.mx</h2>
+      <div style="flex:0 0 auto"><label>Corte</label><select id="rcCorte"></select></div>
+      <div style="flex:0 0 auto"><label>Calcular desde un RC (no cambia la base)</label><input type="file" id="fileRcT" accept=".xlsx,.xls,.csv"></div>
+      <div style="flex:0 0 auto"><button class="dor hide" id="btnRcSave">Guardar como corte de hoy</button> <button class="sec" id="btnRcXls">⬇ Histórico (Excel)</button></div></div>
+      <p class="mut" id="rcInfo" style="margin:8px 0 0"></p>
+      <div class="rck" id="rcK"></div></div>
+    <div class="grid2">
+      <div class="card"><h3 class="ct">Finalizado – otros motivos · motivos de cierre</h3><div class="mot" id="rcMot"></div>
+        <p class="mut">El RC no muestra <b>FOLIO DUPLICADO</b> en su desglose, pero sí lo suma en la tarjeta de "otros motivos". Aquí se muestra para que cuadre el total.</p></div>
+      <div class="card"><h3 class="ct">Finalizado – entregado · cómo se compone</h3><div class="mot" id="rcEnt" style="grid-template-columns:1fr"></div>
+        <h3 class="ct" style="margin-top:14px">Criterios de conteo</h3><ul class="crit">
+        <li>Se cuenta <b>por receta (folio único)</b>, no por renglón: una receta con 3 claves cuenta 1.</li>
+        <li>El estatus es la columna <b>Estatus Actual</b> (REGISTRADA, EN GESTIÓN, EN SITIO, FINALIZADA).</li>
+        <li><b>Finalizado – entregado</b> = FINALIZADA con motivo "MEDICAMENTO ENTREGADO" o "RECETA SURTIDA EN FARMACIA…".</li>
+        <li><b>Finalizado – otros motivos</b> = FINALIZADA con cualquier otro motivo; el % de cada motivo es sobre el total de esta tarjeta.</li>
+        <li>Incluye todo el archivo RC (también finalizadas que no están en la base del Monitor).</li></ul></div></div>
+    <div class="card"><h3 class="ct">Histórico de cortes (recetas)</h3>
+      <div class="tw"><table><thead><tr><th>Corte</th><th>Total</th><th>Registrado</th><th>En gestión</th><th>En sitio</th><th>Fin. entregado</th><th>Fin. otros motivos</th><th>% finalizado</th><th>Δ finalizadas vs corte anterior</th></tr></thead><tbody id="rcHist"></tbody></table></div>
+      <p class="mut">Se guarda un corte cada vez que se carga un RC (uno por día: el último del día reemplaza al anterior).</p></div>
+    <div class="card"><h3 class="ct">Por semana de registro (estatus actual de las recetas registradas esa semana)</h3>
+      <div class="tw"><table><thead><tr><th>Semana (lunes)</th><th>Recetas</th><th>Registrado</th><th>En gestión</th><th>En sitio</th><th>Fin. entregado</th><th>Fin. otros motivos</th><th>% finalizado</th></tr></thead><tbody id="rcSem"></tbody></table></div></div>
+    <div class="card"><h3 class="ct">Por unidad médica</h3>
+      <div class="tw"><table><thead><tr><th>Unidad</th><th>Recetas</th><th>Registrado</th><th>En gestión</th><th>En sitio</th><th>Fin. entregado</th><th>Fin. otros motivos</th><th>% finalizado</th></tr></thead><tbody id="rcUni"></tbody></table></div></div>
   </div>
 
   <div id="tResumen" class="hide">
@@ -399,7 +431,7 @@ function imgDataUrl(file, max, q) {
 /* ---------------- estado ---------------- */
 let CFG = Object.assign({ mode: 'demo', spSite: '', spList: 'MonitorCAE', gUrl: '', gKey: '' }, LS.get('cfg', {}));
 if (CONFIG_FIJA.mode) CFG = { ...CFG, ...Object.fromEntries(Object.entries(CONFIG_FIJA).filter(([, v]) => v)) };
-let DB = DemoDB, DATA = [], USER = LS.get('user', null), PREV = null;
+let DB = DemoDB, DATA = [], USER = LS.get('user', null), PREV = null, PREV_RC = null;
 
 function conectar() {
   if (GAS) DB = AppsDB;
@@ -733,8 +765,8 @@ function demo() {
 
 /* ---------------- tabs / eventos ---------------- */
 function tab(t) { $$('#tabs button').forEach(b => b.classList.toggle('on', b.dataset.t === t));
-  ['lista', 'caratula', 'resumen', 'carga', 'config'].forEach(x => $('#t' + x[0].toUpperCase() + x.slice(1)).classList.toggle('hide', x !== t));
-  if (t === 'resumen') resumen(); if (t === 'caratula') caratula(); if (t === 'config') pintarCfg(); }
+  ['lista', 'caratula', 'rc', 'resumen', 'carga', 'config'].forEach(x => $('#t' + x[0].toUpperCase() + x.slice(1)).classList.toggle('hide', x !== t));
+  if (t === 'resumen') resumen(); if (t === 'caratula') caratula(); if (t === 'rc') tableroRC(); if (t === 'config') pintarCfg(); }
 function pintarCfg() { $('#cGas').classList.toggle('hide', !GAS); $('#cLocal').classList.toggle('hide', !!GAS); $('#cMode').value = CFG.mode; $('#cSite').value = CFG.spSite; $('#cList').value = CFG.spList; $('#cGUrl').value = CFG.gUrl; $('#cGKey').value = CFG.gKey;
   $('#cSP').classList.toggle('hide', CFG.mode !== 'sharepoint'); $('#cGG').classList.toggle('hide', CFG.mode !== 'google'); }
 
@@ -756,7 +788,7 @@ $('#btnSetup').onclick = async () => { const b = $('#btnSetup'); b.disabled = tr
   try { SharePointDB.site = $('#cSite').value.trim(); SharePointDB.list = $('#cList').value.trim() || 'MonitorCAE'; const n = await SharePointDB.setup(); toast(`Lista lista. Columnas creadas: ${n}`, 5000); }
   catch (e) { toast('No se pudo crear: ' + e.message, 8000); } finally { b.disabled = false; b.textContent = 'Crear lista y columnas en SharePoint'; } };
 $('#fileRC').onchange = async e => { const f = e.target.files[0]; if (!f) return; $('#prev').textContent = 'Leyendo…'; $('#btnImp').disabled = true;
-  try { const regs = convertir(await leerArchivo(f));
+  try { const rows = await leerArchivo(f), regs = convertir(rows); try { PREV_RC = resumenRC(rows, f.name); } catch (e2) { PREV_RC = null; }
     const cnt = {}; regs.forEach(r => cnt[r.estatusRC] = (cnt[r.estatusRC] || 0) + 1);
     const copia = {}; DATA.forEach(o => copia[o.id] = { ...o }); const x = fusionar(copia, regs, 'RC');
     PREV = regs; $('#prev').innerHTML = `<b>${regs.length}</b> renglones leídos (${Object.entries(cnt).map(([k, v]) => k + ': ' + v).join(', ')}).<br>Al subir: ${textoCarga(x, 'RC')}.`;
@@ -767,7 +799,77 @@ async function subirCarga(regs, modo, b, txt, input, prev) { b.disabled = true; 
     toast('Listo: ' + (x.acciones != null ? textoCarga(x, modo) : `${x.nuevos} nuevos, ${x.actualizados} actualizados`), 8000);
     $(prev).textContent = ''; $(input).value = ''; await cargar(); tab('lista'); }
   catch (e) { toast('Error al subir: ' + e.message, 8000); b.disabled = false; } finally { b.textContent = txt; } }
-$('#btnImp').onclick = async () => { await subirCarga(PREV, 'RC', $('#btnImp'), 'Subir a la base de datos', '#fileRC', '#prev'); PREV = null; };
+$('#btnImp').onclick = async () => { const snap = PREV_RC; await subirCarga(PREV, 'RC', $('#btnImp'), 'Subir a la base de datos', '#fileRC', '#prev'); PREV = null; PREV_RC = null; if (snap && await rcHistGuardar(snap)) toast('Base actualizada y corte del Tablero RC guardado ✓', 5000); };
+/* ---------------- Tablero RC (cuenta igual que rc.apps.ocp.imss.gob.mx) ---------------- */
+const RC_ENTREGADO = /^(medicamento entregado|receta surtida en farmacia)/;
+const RC_MOTIVOS = ['RECETA VENCIDA', 'PACIENTE NO SE PRESENTÓ EN FARMACIA A RECOGER MEDICAMENTO', 'RECETA CON INFORMACIÓN INCOMPLETA O ERRÓNEA', 'AREA MÉDICA SUGIERE SUSTITUCIÓN TERAPÉUTICA',
+  'ATENCIÓN NO PROCEDENTE. EL REQUERIMIENTO NO CUMPLE CON LAS CONDICIONES PARA CONTINUAR EL PROCESO DE SUMINISTRO.', 'RECETA CON VALE (SURTIDA, NEGADA O PARCIAL)', 'FOLIO DUPLICADO'];
+let RC_HIST = null, RC_VIVO = null;
+function rcVacio() { return { total: 0, reg: 0, ges: 0, sit: 0, fe: 0, fo: 0 }; }
+function rcSumar(o, cat) { o.total++; o[cat]++; }
+function isoRC(v) { if (v == null || v === '') return ''; const p = n => String(n).padStart(2, '0');
+  if (typeof v === 'number' && v > 20000 && v < 80000) { const d = new Date(Math.round((v - 25569) * 864e5)); return `${d.getUTCFullYear()}-${p(d.getUTCMonth() + 1)}-${p(d.getUTCDate())}`; }
+  const t = String(v).trim(), m = t.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/); if (m) return `${m[3]}-${p(m[2])}-${p(m[1])}`;
+  const m2 = t.match(/^(\d{4})-(\d{2})-(\d{2})/); return m2 ? m2[0] : ''; }
+function lunes(iso) { const d = new Date(iso + 'T00:00:00'); if (isNaN(d)) return ''; d.setDate(d.getDate() - ((d.getDay() + 6) % 7)); const p = n => String(n).padStart(2, '0'); return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`; }
+function resumenRC(rows, nombre) {
+  const hi = rows.findIndex(r => r.some(c => norm(c) === 'clavemedicamento')); if (hi < 0) throw new Error('No encontré la columna "Clave medicamento". ¿Es un reporte RC?');
+  const h = rows[hi].map(norm), col = (...al) => h.findIndex(x => al.includes(x));
+  const iF = col('folioonumeroreceta', 'folioreceta'), iE = col('estatusactual'), iM = col('motivodefinalizado'), iU = col('unidadmedica'), iR = col('fechaderegistro');
+  if (iF < 0 || iE < 0) throw new Error('Faltan las columnas "Folio o Número Receta" o "Estatus Actual"');
+  const fol = {}; let renglones = 0;
+  for (const r of rows.slice(hi + 1)) { const f = String(r[iF] ?? '').trim(); if (!f) continue; renglones++;
+    if (!fol[f]) fol[f] = { e: String(r[iE] || '').trim().toUpperCase(), m: iM >= 0 ? String(r[iM] || '').trim() : '', u: iU >= 0 ? String(r[iU] || '').trim() : '', d: iR >= 0 ? isoRC(r[iR]) : '' }; }
+  const T = rcVacio(), mot = {}, ent = {}, uni = {}, sem = {}, fechas = [];
+  for (const o of Object.values(fol)) {
+    let cat = 'reg'; const e = norm(o.e);
+    if (e === 'engestion') cat = 'ges'; else if (e === 'ensitio') cat = 'sit';
+    else if (e === 'finalizada' || e === 'finalizado') { const m = o.m.toUpperCase() || '(SIN MOTIVO)'; if (RC_ENTREGADO.test(norm2(m))) { cat = 'fe'; ent[m] = (ent[m] || 0) + 1; } else { cat = 'fo'; mot[m] = (mot[m] || 0) + 1; } }
+    rcSumar(T, cat); const u = o.u || '(sin unidad)'; rcSumar(uni[u] = uni[u] || rcVacio(), cat);
+    if (o.d) { fechas.push(o.d); const w = lunes(o.d); if (w) rcSumar(sem[w] = sem[w] || rcVacio(), cat); }
+  }
+  fechas.sort();
+  return { fecha: hoy(), hora: ahora(), archivo: nombre || '', renglones, ...T, motivos: mot, entregado: ent, unidades: uni, semanas: sem, desde: fechas[0] || '', hasta: fechas[fechas.length - 1] || '' };
+}
+async function rcHistLeer() { try { RC_HIST = await MonitorCAE.llamar('rcHistLeer', []); } catch (e) { RC_HIST = RC_HIST || []; toast('No se pudo leer el histórico RC: ' + e.message, 6000); } return RC_HIST; }
+async function rcHistGuardar(snap) { try { RC_HIST = await MonitorCAE.llamar('rcHistGuardar', [snap]); return true; } catch (e) { toast('El corte del Tablero RC no se guardó: ' + e.message, 7000); return false; } }
+function rcFila(lab, o, extra = '') { const fin = o.fe + o.fo; return `<tr><td>${lab}</td><td><b>${o.total}</b></td><td>${o.reg}</td><td>${o.ges}</td><td>${o.sit}</td><td>${o.fe}</td><td>${o.fo}</td><td>${fpct(pct(fin, o.total))}</td>${extra}</tr>`; }
+function rcBarras(obj, base, fijos) { const ks = [...new Set([...(fijos || []), ...Object.keys(obj)])].sort((a, b) => (obj[b] || 0) - (obj[a] || 0));
+  return ks.map(k => { const n = obj[k] || 0, p = base ? n / base * 100 : 0; return `<div><div class="h"><span>${esc(k)}</span><b>${n}</b></div><span class="mut" style="font-size:12px">${p.toFixed(1)}% del tipo de finalización</span><div class="t"><i style="width:${p}%"></i></div></div>`; }).join('') || '<p class="mut">Sin registros</p>'; }
+async function tableroRC(elegir) {
+  if (RC_HIST == null) { $('#rcInfo').textContent = 'Cargando histórico…'; await rcHistLeer(); }
+  const H = (RC_HIST || []).slice().sort((a, b) => a.fecha.localeCompare(b.fecha)), sel = $('#rcCorte'), v = elegir || sel.value;
+  sel.innerHTML = (RC_VIVO ? '<option value="vivo">Archivo recién leído (sin guardar)</option>' : '') + H.slice().reverse().map(s => `<option value="${esc(s.fecha)}">${esc(s.fecha)}</option>`).join('');
+  if ([...sel.options].some(o => o.value === v)) sel.value = v;
+  $('#btnRcSave').classList.toggle('hide', sel.value !== 'vivo');
+  const S = sel.value === 'vivo' ? RC_VIVO : H.find(s => s.fecha === sel.value);
+  if (!S) { $('#rcK').innerHTML = ''; $('#rcInfo').innerHTML = 'Todavía no hay cortes. Carga un RC aquí o en <b>Cargar RC</b> para generar el primero.'; ['#rcMot', '#rcEnt', '#rcHist', '#rcSem', '#rcUni'].forEach(x => $(x).innerHTML = ''); return; }
+  $('#rcInfo').textContent = `Corte ${S.hora}${S.archivo ? ' · ' + S.archivo : ''} · ${S.total} recetas (${S.renglones} renglones folio + clave) · registradas del ${S.desde} al ${S.hasta}`;
+  $('#rcK').innerHTML = [['reg', 'Registrado', S.reg], ['ges', 'En gestión', S.ges], ['sit', 'En sitio', S.sit], ['fe', 'Finalizado - entregado', S.fe], ['fo', 'Finalizado - otros motivos', S.fo]]
+    .map(([c, l, n]) => `<div class="${c}"><span>${l}</span><b>${n}</b></div>`).join('');
+  $('#rcMot').innerHTML = rcBarras(S.motivos || {}, S.fo, RC_MOTIVOS);
+  $('#rcEnt').innerHTML = rcBarras(S.entregado || {}, S.fe);
+  $('#rcHist').innerHTML = H.slice().reverse().map((s, i, a) => { const p = a[i + 1], f = s.fe + s.fo, d = p ? f - (p.fe + p.fo) : null;
+    return rcFila(esc(s.fecha), s, `<td>${d == null ? '—' : (d > 0 ? '+' : '') + d}</td>`); }).join('') || '<tr><td colspan="9" class="mut">Sin cortes guardados</td></tr>';
+  $('#rcSem').innerHTML = Object.entries(S.semanas || {}).sort((a, b) => b[0].localeCompare(a[0])).map(([w, o]) => rcFila(esc(w), o)).join('');
+  $('#rcUni').innerHTML = Object.entries(S.unidades || {}).sort((a, b) => b[1].total - a[1].total).map(([u, o]) => rcFila(esc(u), o)).join('');
+}
+function rcExcel() { const H = (RC_HIST || []).slice().sort((a, b) => a.fecha.localeCompare(b.fecha)); if (!H.length) return toast('No hay cortes guardados');
+  const mk = new Set(); H.forEach(s => Object.keys(s.motivos || {}).forEach(k => mk.add(k))); const M = [...mk];
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([['Corte', 'Total recetas', 'Registrado', 'En gestión', 'En sitio', 'Finalizado - entregado', 'Finalizado - otros motivos', '% finalizado', ...M, 'Renglones', 'Archivo'],
+    ...H.map(s => [s.fecha, s.total, s.reg, s.ges, s.sit, s.fe, s.fo, pct(s.fe + s.fo, s.total), ...M.map(k => (s.motivos || {})[k] || 0), s.renglones, s.archivo])]), 'Histórico');
+  const S = H[H.length - 1], sh = (o, lab) => [[lab, 'Recetas', 'Registrado', 'En gestión', 'En sitio', 'Finalizado - entregado', 'Finalizado - otros motivos'], ...Object.entries(o || {}).sort().map(([k, x]) => [k, x.total, x.reg, x.ges, x.sit, x.fe, x.fo])];
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(sh(S.semanas, 'Semana de registro (lunes)')), 'Por semana');
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(sh(S.unidades, 'Unidad')), 'Por unidad');
+  XLSX.writeFile(wb, 'Tablero_RC_historico_' + hoy() + '.xlsx'); }
+$('#rcCorte').onchange = () => tableroRC(); $('#btnRcXls').onclick = rcExcel;
+$('#fileRcT').onchange = async e => { const f = e.target.files[0]; if (!f) return;
+  try { RC_VIVO = resumenRC(await leerArchivo(f), f.name); await tableroRC('vivo'); toast('Calculado. Si quieres conservarlo, presiona "Guardar como corte de hoy".', 6000); }
+  catch (err) { toast('Error: ' + err.message, 7000); } finally { e.target.value = ''; } };
+$('#btnRcSave').onclick = async () => { if (!RC_VIVO) return; const b = $('#btnRcSave'); b.disabled = true;
+  if (await rcHistGuardar(RC_VIVO)) { const f = RC_VIVO.fecha; RC_VIVO = null; await tableroRC(f); toast('Corte guardado ✓'); } b.disabled = false; };
+
 let PREV_PLA = null;
 $('#filePLA').onchange = async e => { const f = e.target.files[0]; if (!f) return; $('#prevPLA').textContent = 'Leyendo…'; $('#btnImpPLA').disabled = true; PREV_PLA = null;
   try { const regs = convertir(await leerArchivo(f));
