@@ -79,21 +79,62 @@ if (!is_array($req) || empty($req['fn']) || !is_string($req['fn'])) {
 $req['token'] = $cfg['token'];
 
 // ---- reenvío al Apps Script ----
-$ch = curl_init($cfg['exec']);
-curl_setopt_array($ch, [
-                    CURLOPT_POST           => true,
-                    CURLOPT_POSTFIELDS     => json_encode($req, JSON_UNESCAPED_UNICODE),
-                    CURLOPT_HTTPHEADER     => ['Content-Type: text/plain;charset=utf-8'],
-                    CURLOPT_RETURNTRANSFER => true,
-                    CURLOPT_FOLLOWLOCATION => true,   // Apps Script responde con una redirección
-                    CURLOPT_MAXREDIRS      => 5,
-                    CURLOPT_CONNECTTIMEOUT => 15,
-                    CURLOPT_TIMEOUT        => 120,
-                    CURLOPT_ENCODING       => '',     // acepta respuesta comprimida
-                  ]);
-$resp = curl_exec($ch);
-$http = (int) curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
-curl_close($ch);
+function reenviar(array $cfg, array $req): array {
+    $ch = curl_init($cfg['exec']);
+    curl_setopt_array($ch, [
+                        CURLOPT_POST           => true,
+                        CURLOPT_POSTFIELDS     => json_encode($req, JSON_UNESCAPED_UNICODE),
+                        CURLOPT_HTTPHEADER     => ['Content-Type: text/plain;charset=utf-8'],
+                        CURLOPT_RETURNTRANSFER => true,
+                        CURLOPT_FOLLOWLOCATION => true,   // Apps Script responde con una redirección
+                        CURLOPT_MAXREDIRS      => 5,
+                        CURLOPT_CONNECTTIMEOUT => 15,
+                        CURLOPT_TIMEOUT        => 120,
+                        CURLOPT_ENCODING       => '',     // acepta respuesta comprimida
+                      ]);
+    $resp = curl_exec($ch);
+    $http = (int) curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
+    curl_close($ch);
+    return [$resp, $http];
+}
+
+// ---- Tablero RC: histórico de cortes guardado aquí en Hostinger (fuera de public_html) ----
+// Solo para el perfil CAE: primero se valida la clave con el Apps Script (apiLogin).
+if (in_array($req['fn'], ['rcHistLeer', 'rcHistGuardar'], true)) {
+    [$lr, $lh] = reenviar($cfg, ['fn' => 'apiLogin', 'args' => [], 'clave' => $req['clave'] ?? '', 'token' => $cfg['token']]);
+    $lj = is_string($lr) ? json_decode($lr, true) : null;
+    if (!is_array($lj) || empty($lj['ok'])) {
+        $err = is_array($lj) && !empty($lj['error']) ? (string) $lj['error'] : 'Sin conexión con el servidor de datos. Inténtalo de nuevo.';
+        if (strpos($err, 'Clave de acceso') !== false) {
+            $st['fallos'] = array_values(array_filter($st['fallos'], fn($t) => $t > $ahora - VENTANA_SEG));
+            $st['fallos'][] = $ahora;
+            if (count($st['fallos']) >= MAX_FALLOS) { $st['bloqueo'] = $ahora + BLOQUEO_SEG; $st['fallos'] = []; }
+        }
+        $guardar();
+        responder(['ok' => false, 'error' => $err]);
+    }
+    $st['fallos'] = [];
+    $guardar();
+    if (($lj['data']['rol'] ?? '') !== 'CAE') responder(['ok' => false, 'error' => 'Solo el perfil CAE puede ver el Tablero RC']);
+
+    $archivoHist = $privado . '/rc-historico.json';
+    $hist = is_file($archivoHist) ? json_decode((string) @file_get_contents($archivoHist), true) : [];
+    if (!is_array($hist)) $hist = [];
+
+    if ($req['fn'] === 'rcHistGuardar') {
+        $s = $req['args'][0] ?? null;
+        if (!is_array($s) || !preg_match('/^\d{4}-\d{2}-\d{2}$/', (string) ($s['fecha'] ?? ''))) responder(['ok' => false, 'error' => 'Corte no válido']);
+        $s['guardadoPor'] = (string) ($lj['data']['nombre'] ?? 'CAE');
+        $hist = array_values(array_filter($hist, fn($h) => ($h['fecha'] ?? '') !== $s['fecha'])); // uno por día
+        $hist[] = $s;
+        usort($hist, fn($a, $b) => strcmp((string) $a['fecha'], (string) $b['fecha']));
+        if (count($hist) > 730) $hist = array_slice($hist, -730);
+        if (@file_put_contents($archivoHist, json_encode($hist, JSON_UNESCAPED_UNICODE), LOCK_EX) === false) responder(['ok' => false, 'error' => 'No se pudo guardar el histórico en el servidor']);
+    }
+    responder(['ok' => true, 'data' => $hist]);
+}
+
+[$resp, $http] = reenviar($cfg, $req);
 
 if ($resp === false || $http >= 500) {
     $guardar();
