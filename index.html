@@ -472,18 +472,21 @@ function filtrar(rs) {
     && (!t || norm([r.folio, r.paciente, r.clave, r.descripcion, r.curp].join(' ')).includes(t)) && (!pac || norm(r.paciente).includes(pac)) && (!med || norm([r.clave, r.descripcion].join(' ')).includes(med)) && (!acc || (acc === '(vacío)' ? !String(r.accionCAE || '').trim() : String(r.accionCAE || '').trim() === acc)) && (!erc || (erc === '(vacío)' ? !String(r.estatusRC || '').trim() : String(r.estatusRC || '').trim() === erc)));
 }
 function dias(r) { const d = parseInt(r.diasRegistro) || 0, c = diasDesde(r.fechaCarga); return d + (c || 0); }
+function porFolio(rs) { const m = new Map(); for (const r of rs) { const f = String(r.folio || '').trim() || ('#' + r.id); if (!m.has(f)) m.set(f, []); m.get(f).push(r); } return [...m.values()]; }
+function estatusRCFolio(g) { const r = g.find(x => String(x.estatusRC || '').trim()) || g[0]; const e = String(r.estatusRC || '').trim().toUpperCase().replace('EN GESTION', 'EN GESTIÓN'); return e || estatusMonitor(r); }
 function render() {
   if (!USER || $('#vApp').classList.contains('hide')) return;
   const base = visibles(), rs = filtrar(base).sort((a, b) => dias(b) - dias(a));
-  const cnt = k => base.filter(r => estatusMonitor(r) === k).length;
-  const mio = base.filter(r => pendRol(r, USER.rol) || (USER.rol === 'TAOD' && quejaPend(r))).length;
+  /* tarjetas por RECETA (folio único) y Estatus RC, igual que rc.apps.ocp.imss.gob.mx */
+  const F = porFolio(base), cnt = k => F.filter(g => estatusRCFolio(g) === k).length;
+  const mio = F.filter(g => g.some(r => pendRol(r, USER.rol) || (USER.rol === 'TAOD' && quejaPend(r)))).length;
   $('#kpis').innerHTML = [
-    ['', base.length, 'Total de renglones (folio + clave)', ''],
-    ['fin', cnt('FINALIZADA'), 'FINALIZADA (entregada)', 'FINALIZADA'], ['sit', cnt('EN SITIO'), 'EN SITIO (en farmacia)', 'EN SITIO'],
-    ['ges', cnt('EN GESTIÓN'), 'EN GESTIÓN', 'EN GESTIÓN'], ['reg', cnt('REGISTRADA'), 'REGISTRADA', 'REGISTRADA'],
-    ['pla', mio, USER.rol === 'CAE' ? 'Por actualizar en plataforma' : 'Pendientes de mi rubro', '#']
+    ['', F.length, 'Total de recetas (folio único)', ''],
+    ['reg', cnt('REGISTRADA'), 'REGISTRADA', 'REGISTRADA'], ['ges', cnt('EN GESTIÓN'), 'EN GESTIÓN', 'EN GESTIÓN'],
+    ['sit', cnt('EN SITIO'), 'EN SITIO', 'EN SITIO'], ['fin', cnt('FINALIZADA'), 'FINALIZADA', 'FINALIZADA'],
+    ['pla', mio, USER.rol === 'CAE' ? 'Recetas por actualizar en plataforma' : 'Recetas pendientes de mi rubro', '#']
   ].map(([c, n, l, f]) => `<div class="kpi ${c}" data-f="${f}"${c === 'fin' ? ' style="background:#eaf6ee"' : ''}><b>${n}</b><span>${l}</span></div>`).join('');
-  $$('.kpi').forEach(k => k.onclick = () => { const f = k.dataset.f; if (f === '#') { $('#fVer').value = USER.rol === 'CAE' ? 'pla' : 'mio'; $('#fEst').value = ''; } else { $('#fEst').value = f; $('#fVer').value = ''; } render(); });
+  $$('#kpis .kpi').forEach(k => k.onclick = () => { const f = k.dataset.f; $('#fEst').value = ''; if (f === '#') { $('#fVer').value = USER.rol === 'CAE' ? 'pla' : 'mio'; $('#fRC').value = ''; } else { $('#fRC').value = f; $('#fVer').value = ''; } render(); });
   const cae = USER.rol === 'CAE', verTel = cae || USER.rol === 'TAOD';
   $('#tb').innerHTML = rs.slice(0, 1500).map(r => {
     const em = estatusMonitor(r), d = dias(r);
@@ -628,9 +631,10 @@ function caratula() {
   const pend = DATA.filter(r => estatusMonitor(r) !== 'FINALIZADA');
   const pac = rs => { const m = {}; rs.forEach(r => { const k = r.curp || r.paciente || r.folio, d = dias(r); if (m[k] == null || d > m[k]) m[k] = d; }); return Object.values(m); };
   const pp = pac(pend), prom = pp.length ? Math.round(pp.reduce((a, b) => a + b, 0) / pp.length) : 0;
-  $('#kGlobal').innerHTML = [['', DATA.length, 'Total de renglones (folio + clave)'], ['fin', `${cnt('FINALIZADA')} · ${fpct(pct(cnt('FINALIZADA'), DATA.length))}`, 'Finalizadas (entregadas)'],
-    ['sit', cnt('EN SITIO'), 'En sitio (en farmacia)'], ['reg', pp.length, 'Pacientes pendientes'], ['ges', prom, 'Días de retraso promedio'],
-    ['pla', DATA.filter(pendPlataforma).length, 'Por actualizar en plataforma']]
+  const FG = porFolio(DATA), cntF = k => FG.filter(g => estatusRCFolio(g) === k).length;
+  $('#kGlobal').innerHTML = [['', FG.length, 'Total de recetas (folio único)'], ['fin', `${cntF('FINALIZADA')} · ${fpct(pct(cntF('FINALIZADA'), FG.length))}`, 'Recetas finalizadas (estatus RC)'],
+    ['sit', cntF('EN SITIO'), 'Recetas en sitio (estatus RC)'], ['reg', pp.length, 'Pacientes pendientes'], ['ges', prom, 'Días de retraso promedio'],
+    ['pla', FG.filter(g => g.some(pendPlataforma)).length, 'Recetas por actualizar en plataforma']]
     .map(([c, n, l]) => `<div class="kpi ${c}"${c === 'fin' ? ' style="background:#eaf6ee"' : ''}><b>${n}</b><span>${l}</span></div>`).join('');
   const lista = Object.entries(U).map(([u, rs]) => ({ u, rs, I: indicadores(rs, meta) })).sort((a, b) => b.rs.length - a.rs.length);
   const col = { 'REGISTRADA': 'var(--reg)', 'EN GESTIÓN': 'var(--ges)', 'EN SITIO': 'var(--sit)', 'FINALIZADA': 'var(--fin)' };
