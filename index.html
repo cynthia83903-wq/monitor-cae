@@ -79,10 +79,8 @@ td{border-bottom:1px solid var(--ln);padding:6px;vertical-align:top}tr.it:hover 
   <div class="tabs" id="tabs">
     <button data-t="lista" class="on">Recetas</button>
     <button data-t="caratula" data-cae>Carátula CAE</button>
-    <button data-t="rc" data-cae>Tablero RC</button>
     <button data-t="resumen" data-cae>Resumen por unidad</button>
     <button data-t="carga" data-cae>Cargar RC</button>
-    <button data-t="config" data-cae>Configuración</button>
   </div>
 
   <div id="tLista">
@@ -121,12 +119,28 @@ td{border-bottom:1px solid var(--ln);padding:6px;vertical-align:top}tr.it:hover 
       <div class="tw"><table><thead><tr><th>Unidad</th><th>Sin gestión fuera de meta</th><th>Gestionados fuera de meta</th><th>Quién capturó la gestión</th><th>Sin contacto</th><th>Localizados sin entregar</th></tr></thead><tbody id="tbRet"></tbody></table></div></div>
   </div>
 
-  <div id="tRc" class="hide">
+  <div id="tResumen" class="hide">
+    <div class="card"><h3 style="margin-top:0;color:var(--v)">Avance por unidad médica</h3>
+    <div class="tw"><table><thead><tr><th>Unidad</th><th>Total</th><th>% avance</th><th>FINALIZADA</th><th>EN SITIO</th><th>EN GESTIÓN</th><th>REGISTRADA</th><th>Folios</th><th>Sin gestión (Admin)</th><th>Sin contacto (TAOD)</th><th>Sin entrega (Farmacia)</th><th>Por actualizar en plataforma</th></tr></thead><tbody id="tbRes"></tbody></table></div>
+    <p class="mut">% avance = finalizadas ÷ total de renglones. Verde ≥ 80 %, amarillo 60–79 %, rojo &lt; 60 %.</p></div>
+  </div>
+
+  <div id="tCarga" class="hide">
+    <div class="card">
+      <h3 style="margin-top:0;color:var(--v)">Cargar reporte RC</h3>
+      <p>Selecciona el <b>RC_ddmmaaaa_hhmmss.xlsx</b> exportado de la plataforma. También acepta CSV.</p>
+      <p class="mut">• Solo se <b>agregan las recetas nuevas</b> (folio que aún no está en la base). Las recetas que ya tienen registro no se vuelven a capturar: solo se actualiza su estatus (REGISTRADA, EN GESTIÓN, EN SITIO o <b>FINALIZADA</b>) y los días; si les faltaba teléfono o correo, se completan.<br>
+        • Las recetas FINALIZADAS que todavía no estaban en la base no se agregan.<br>
+        • Lo que capturaron las unidades nunca se borra.</p>
+      <input type="file" id="fileRC" accept=".xlsx,.xls,.csv">
+      <div id="prev" class="mut" style="margin-top:10px"></div>
+      <div class="row" style="margin-top:10px"><button id="btnImp" disabled>Subir a la base de datos</button></div>
+    </div>
+  <div id="tRc">
     <div class="card"><div class="row" style="align-items:flex-end">
       <h2 style="margin:0;color:var(--v);flex:3">Tablero RC · mismos criterios que rc.apps.ocp.imss.gob.mx</h2>
       <div style="flex:0 0 auto"><label>Corte</label><select id="rcCorte"></select></div>
-      <div style="flex:0 0 auto"><label>Calcular desde un RC (no cambia la base)</label><input type="file" id="fileRcT" accept=".xlsx,.xls,.csv"></div>
-      <div style="flex:0 0 auto"><button class="dor hide" id="btnRcSave">Guardar como corte de hoy</button> <button class="sec" id="btnRcXls">⬇ Histórico (Excel)</button></div></div>
+      <div style="flex:0 0 auto"><button class="sec" id="btnRcXls">⬇ Histórico (Excel)</button></div></div>
       <p class="mut" id="rcInfo" style="margin:8px 0 0"></p>
       <div class="rck" id="rcK"></div></div>
     <div class="grid2">
@@ -148,23 +162,6 @@ td{border-bottom:1px solid var(--ln);padding:6px;vertical-align:top}tr.it:hover 
       <div class="tw"><table><thead><tr><th>Unidad</th><th>Recetas</th><th>Registrado</th><th>En gestión</th><th>En sitio</th><th>Fin. entregado</th><th>Fin. otros motivos</th><th>% finalizado</th></tr></thead><tbody id="rcUni"></tbody></table></div></div>
   </div>
 
-  <div id="tResumen" class="hide">
-    <div class="card"><h3 style="margin-top:0;color:var(--v)">Avance por unidad médica</h3>
-    <div class="tw"><table><thead><tr><th>Unidad</th><th>Total</th><th>% avance</th><th>FINALIZADA</th><th>EN SITIO</th><th>EN GESTIÓN</th><th>REGISTRADA</th><th>Folios</th><th>Sin gestión (Admin)</th><th>Sin contacto (TAOD)</th><th>Sin entrega (Farmacia)</th><th>Por actualizar en plataforma</th></tr></thead><tbody id="tbRes"></tbody></table></div>
-    <p class="mut">% avance = finalizadas ÷ total de renglones. Verde ≥ 80 %, amarillo 60–79 %, rojo &lt; 60 %.</p></div>
-  </div>
-
-  <div id="tCarga" class="hide">
-    <div class="card">
-      <h3 style="margin-top:0;color:var(--v)">Cargar reporte RC</h3>
-      <p>Selecciona el <b>RC_ddmmaaaa_hhmmss.xlsx</b> exportado de la plataforma. También acepta CSV.</p>
-      <p class="mut">• Solo se <b>agregan las recetas nuevas</b> (folio que aún no está en la base). Las recetas que ya tienen registro no se vuelven a capturar: solo se actualiza su estatus (REGISTRADA, EN GESTIÓN, EN SITIO o <b>FINALIZADA</b>) y los días; si les faltaba teléfono o correo, se completan.<br>
-        • Las recetas FINALIZADAS que todavía no estaban en la base no se agregan.<br>
-        • Lo que capturaron las unidades nunca se borra.</p>
-      <input type="file" id="fileRC" accept=".xlsx,.xls,.csv">
-      <div id="prev" class="mut" style="margin-top:10px"></div>
-      <div class="row" style="margin-top:10px"><button id="btnImp" disabled>Subir a la base de datos</button></div>
-    </div>
     <div class="card">
       <h3 style="margin-top:0;color:var(--v)">Actualizar acciones con RC_PLATAFORMA</h3>
       <p>Selecciona el <b>RC_PLATAFORMA_ddmmaaaa_hhmm.xlsx</b>. Se toma la columna <b>Acciones</b> (hoja RC dd-mm-aaaa) y se actualiza la acción sugerida a los administradores en las recetas que ya están en la base.</p>
@@ -173,7 +170,7 @@ td{border-bottom:1px solid var(--ln);padding:6px;vertical-align:top}tr.it:hover 
       <div id="prevPLA" class="mut" style="margin-top:10px"></div>
       <div class="row" style="margin-top:10px"><button id="btnImpPLA" disabled>Actualizar acciones</button></div>
     </div>
-    <div class="card" id="demoBox">
+    <div class="card hide" id="demoBox">
       <h3 style="margin-top:0;color:var(--v)">Datos de ejemplo</h3>
       <p class="mut">Genera 40 renglones ficticios para presentar el flujo con los tres roles sin usar datos reales de pacientes.</p>
       <button class="sec" id="btnDemo">Generar datos de ejemplo</button> <button class="sec" id="btnBorrar">Borrar toda la base</button>
@@ -769,8 +766,8 @@ function demo() {
 
 /* ---------------- tabs / eventos ---------------- */
 function tab(t) { $$('#tabs button').forEach(b => b.classList.toggle('on', b.dataset.t === t));
-  ['lista', 'caratula', 'rc', 'resumen', 'carga', 'config'].forEach(x => $('#t' + x[0].toUpperCase() + x.slice(1)).classList.toggle('hide', x !== t));
-  if (t === 'resumen') resumen(); if (t === 'caratula') caratula(); if (t === 'rc') tableroRC(); if (t === 'config') pintarCfg(); }
+  ['lista', 'caratula', 'resumen', 'carga', 'config'].forEach(x => $('#t' + x[0].toUpperCase() + x.slice(1)).classList.toggle('hide', x !== t));
+  if (t === 'resumen') resumen(); if (t === 'caratula') caratula(); if (t === 'carga') tableroRC(); if (t === 'config') pintarCfg(); }
 function pintarCfg() { $('#cGas').classList.toggle('hide', !GAS); $('#cLocal').classList.toggle('hide', !!GAS); $('#cMode').value = CFG.mode; $('#cSite').value = CFG.spSite; $('#cList').value = CFG.spList; $('#cGUrl').value = CFG.gUrl; $('#cGKey').value = CFG.gKey;
   $('#cSP').classList.toggle('hide', CFG.mode !== 'sharepoint'); $('#cGG').classList.toggle('hide', CFG.mode !== 'google'); }
 
@@ -792,7 +789,7 @@ $('#btnSetup').onclick = async () => { const b = $('#btnSetup'); b.disabled = tr
   try { SharePointDB.site = $('#cSite').value.trim(); SharePointDB.list = $('#cList').value.trim() || 'MonitorCAE'; const n = await SharePointDB.setup(); toast(`Lista lista. Columnas creadas: ${n}`, 5000); }
   catch (e) { toast('No se pudo crear: ' + e.message, 8000); } finally { b.disabled = false; b.textContent = 'Crear lista y columnas en SharePoint'; } };
 $('#fileRC').onchange = async e => { const f = e.target.files[0]; if (!f) return; $('#prev').textContent = 'Leyendo…'; $('#btnImp').disabled = true;
-  try { const rows = await leerArchivo(f), regs = convertir(rows); try { PREV_RC = resumenRC(rows, f.name); } catch (e2) { PREV_RC = null; }
+  try { const rows = await leerArchivo(f), regs = convertir(rows); try { PREV_RC = resumenRC(rows, f.name); RC_VIVO = PREV_RC; tableroRC('vivo'); } catch (e2) { PREV_RC = null; }
     const cnt = {}; regs.forEach(r => cnt[r.estatusRC] = (cnt[r.estatusRC] || 0) + 1);
     const copia = {}; DATA.forEach(o => copia[o.id] = { ...o }); const x = fusionar(copia, regs, 'RC');
     PREV = regs; $('#prev').innerHTML = `<b>${regs.length}</b> renglones leídos (${Object.entries(cnt).map(([k, v]) => k + ': ' + v).join(', ')}).<br>Al subir: ${textoCarga(x, 'RC')}.`;
@@ -803,7 +800,7 @@ async function subirCarga(regs, modo, b, txt, input, prev) { b.disabled = true; 
     toast('Listo: ' + (x.acciones != null ? textoCarga(x, modo) : `${x.nuevos} nuevos, ${x.actualizados} actualizados`), 8000);
     $(prev).textContent = ''; $(input).value = ''; await cargar(); tab('lista'); }
   catch (e) { toast('Error al subir: ' + e.message, 8000); b.disabled = false; } finally { b.textContent = txt; } }
-$('#btnImp').onclick = async () => { const snap = PREV_RC; await subirCarga(PREV, 'RC', $('#btnImp'), 'Subir a la base de datos', '#fileRC', '#prev'); PREV = null; PREV_RC = null; if (snap && await rcHistGuardar(snap)) toast('Base actualizada y corte del Tablero RC guardado ✓', 5000); };
+$('#btnImp').onclick = async () => { const snap = PREV_RC; await subirCarga(PREV, 'RC', $('#btnImp'), 'Subir a la base de datos', '#fileRC', '#prev'); PREV = null; PREV_RC = null; RC_VIVO = null; if (snap && await rcHistGuardar(snap)) toast('Base actualizada y corte del Tablero RC guardado ✓', 5000); };
 /* ---------------- Tablero RC (cuenta igual que rc.apps.ocp.imss.gob.mx) ---------------- */
 const RC_ENTREGADO = /^(medicamento entregado|receta surtida en farmacia)/;
 const RC_MOTIVOS = ['RECETA VENCIDA', 'PACIENTE NO SE PRESENTÓ EN FARMACIA A RECOGER MEDICAMENTO', 'RECETA CON INFORMACIÓN INCOMPLETA O ERRÓNEA', 'AREA MÉDICA SUGIERE SUSTITUCIÓN TERAPÉUTICA',
@@ -843,11 +840,10 @@ function rcBarras(obj, base, fijos) { const ks = [...new Set([...(fijos || []), 
 async function tableroRC(elegir) {
   if (RC_HIST == null) { $('#rcInfo').textContent = 'Cargando histórico…'; await rcHistLeer(); }
   const H = (RC_HIST || []).slice().sort((a, b) => a.fecha.localeCompare(b.fecha)), sel = $('#rcCorte'), v = elegir || sel.value;
-  sel.innerHTML = (RC_VIVO ? '<option value="vivo">Archivo recién leído (sin guardar)</option>' : '') + H.slice().reverse().map(s => `<option value="${esc(s.fecha)}">${esc(s.fecha)}</option>`).join('');
+  sel.innerHTML = (RC_VIVO ? '<option value="vivo">Archivo seleccionado (se guarda al subir)</option>' : '') + H.slice().reverse().map(s => `<option value="${esc(s.fecha)}">${esc(s.fecha)}</option>`).join('');
   if ([...sel.options].some(o => o.value === v)) sel.value = v;
-  $('#btnRcSave').classList.toggle('hide', sel.value !== 'vivo');
   const S = sel.value === 'vivo' ? RC_VIVO : H.find(s => s.fecha === sel.value);
-  if (!S) { $('#rcK').innerHTML = ''; $('#rcInfo').innerHTML = 'Todavía no hay cortes. Carga un RC aquí o en <b>Cargar RC</b> para generar el primero.'; ['#rcMot', '#rcEnt', '#rcHist', '#rcSem', '#rcUni'].forEach(x => $(x).innerHTML = ''); return; }
+  if (!S) { $('#rcK').innerHTML = ''; $('#rcInfo').innerHTML = 'Todavía no hay cortes. Sube el RC del día arriba para generar el primero.'; ['#rcMot', '#rcEnt', '#rcHist', '#rcSem', '#rcUni'].forEach(x => $(x).innerHTML = ''); return; }
   $('#rcInfo').textContent = `Corte ${S.hora}${S.archivo ? ' · ' + S.archivo : ''} · ${S.total} recetas (${S.renglones} renglones folio + clave) · registradas del ${S.desde} al ${S.hasta}`;
   $('#rcK').innerHTML = [['reg', 'Registrado', S.reg], ['ges', 'En gestión', S.ges], ['sit', 'En sitio', S.sit], ['fe', 'Finalizado - entregado', S.fe], ['fo', 'Finalizado - otros motivos', S.fo]]
     .map(([c, l, n]) => `<div class="${c}"><span>${l}</span><b>${n}</b></div>`).join('');
@@ -868,11 +864,6 @@ function rcExcel() { const H = (RC_HIST || []).slice().sort((a, b) => a.fecha.lo
   XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(sh(S.unidades, 'Unidad')), 'Por unidad');
   XLSX.writeFile(wb, 'Tablero_RC_historico_' + hoy() + '.xlsx'); }
 $('#rcCorte').onchange = () => tableroRC(); $('#btnRcXls').onclick = rcExcel;
-$('#fileRcT').onchange = async e => { const f = e.target.files[0]; if (!f) return;
-  try { RC_VIVO = resumenRC(await leerArchivo(f), f.name); await tableroRC('vivo'); toast('Calculado. Si quieres conservarlo, presiona "Guardar como corte de hoy".', 6000); }
-  catch (err) { toast('Error: ' + err.message, 7000); } finally { e.target.value = ''; } };
-$('#btnRcSave').onclick = async () => { if (!RC_VIVO) return; const b = $('#btnRcSave'); b.disabled = true;
-  if (await rcHistGuardar(RC_VIVO)) { const f = RC_VIVO.fecha; RC_VIVO = null; await tableroRC(f); toast('Corte guardado ✓'); } b.disabled = false; };
 
 let PREV_PLA = null;
 $('#filePLA').onchange = async e => { const f = e.target.files[0]; if (!f) return; $('#prevPLA').textContent = 'Leyendo…'; $('#btnImpPLA').disabled = true; PREV_PLA = null;
